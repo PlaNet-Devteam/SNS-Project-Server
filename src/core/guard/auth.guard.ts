@@ -21,7 +21,7 @@ export class UserGuard extends AuthGuard('jwt') {
     this.loggingOut = isLoggingOut ? isLoggingOut.loggingOut : false;
   }
 
-  loggingOut: boolean = false;
+  loggingOut = false;
 
   handleRequest(
     err: unknown,
@@ -32,7 +32,7 @@ export class UserGuard extends AuthGuard('jwt') {
   ) {
     const request = context.switchToHttp().getRequest<Request>();
     let accessToken = request.headers['authorization'];
-    let refreshCookie = request.cookies['refresh-token'];
+    const refreshCookie = request.cookies['refresh-token'];
     // REFRESH TOKEN 없을 경우
     if (!refreshCookie) {
       throw new UnauthorizedException({

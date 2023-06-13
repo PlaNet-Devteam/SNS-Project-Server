@@ -40,10 +40,11 @@ async function bootstrap() {
 
   // CORS 설장
   app.enableCors({
-    origin: 'http://localhost:4200', // CORS variables, 배열로 지정하는게 맞음. 그리고 이 부분도 나중에 따로 뺄 수 있음
+    origin: 'http://localhost:3000', // CORS variables, 배열로 지정하는게 맞음. 그리고 이 부분도 나중에 따로 뺄 수 있음
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     preflightContinue: false,
     optionsSuccessStatus: 204,
+    credentials: true,
   });
 
   if (process.env.NODE_ENV !== ENVIRONMENT.PRODUCTION) {

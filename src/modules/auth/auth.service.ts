@@ -34,7 +34,7 @@ export class AuthService {
    * @returns AuthTokenVo
    */
   public async login(authLoginDto: AuthLoginDto): Promise<AuthTokenVo> {
-    let user = await this.userRepository.findUserByEmail(authLoginDto.email);
+    const user = await this.userRepository.findUserByEmail(authLoginDto.email);
     if (!user) throw new NotFoundException('User not found');
     // 비번 확인
     await this.userRepository.comparePassword(
@@ -144,7 +144,7 @@ export class AuthService {
     user: User,
     rememberMe?: boolean,
   ): Promise<string> {
-    let expiresIn = rememberMe
+    const expiresIn = rememberMe
       ? process.env.REFRESH_JWT_EXPIRES_IN
       : process.env.REFRESH_JWT_EXPIRES_IN_DEF;
 
