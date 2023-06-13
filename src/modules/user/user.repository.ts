@@ -39,6 +39,7 @@ export class UserRepository {
         'user.bio',
         'user.profileImage',
         'user.status',
+        'user.gender',
       ])
       .where('user.id = :id', { id: id })
       .getOne();
