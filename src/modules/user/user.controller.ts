@@ -6,13 +6,14 @@ import {
   HttpStatus,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { UserFindOneVo } from './vo';
-import { UserCreateDto } from './dto';
+import { UserCreateDto, UserUpdateDto } from './dto';
 import { BaseResponseVo, UserGuard } from 'src/core';
 import { UserInfo } from 'src/common';
 import { User } from './user.entity';
@@ -64,5 +65,18 @@ export class UserController {
   @HttpCode(HttpStatus.CREATED)
   public async createUser(@Body() userCreateDto: UserCreateDto) {
     return await this.userService.createUser(userCreateDto);
+  }
+
+  /**
+   *  사용자 정보 수정
+   */
+  @UseGuards(new UserGuard())
+  @Patch(':id([0-9]+)')
+  @HttpCode(HttpStatus.OK)
+  public async updateUser(
+    @UserInfo() user: User,
+    @Body() userUpdateDto: UserUpdateDto,
+  ) {
+    return await this.userService.updateUser(user.id, userUpdateDto);
   }
 }

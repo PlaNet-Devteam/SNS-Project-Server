@@ -5,8 +5,7 @@ import {
 } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { UserFindOneVo } from './vo';
-import { UserCreateDto } from './dto';
-import { User } from './user.entity';
+import { UserCreateDto, UserUpdateDto } from './dto';
 
 @Injectable()
 export class UserService {
@@ -37,5 +36,15 @@ export class UserService {
     );
     if (checkEmail) throw new BadRequestException();
     await this.userRepository.createUser(userCreateDto);
+  }
+
+  /**
+   *  사용자 수정
+   * @param userUpdateDto
+   */
+  public async updateUser(id: number, userUpdateDto: UserUpdateDto) {
+    const user = await this.userRepository.findOneUser(id);
+    if (!user) throw new NotFoundException();
+    await this.userRepository.updateUser(id, userUpdateDto);
   }
 }

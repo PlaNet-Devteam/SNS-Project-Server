@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { UserFindOneVo } from './vo';
 import { dataSource } from '../../config';
-import { UserCreateDto } from './dto';
+import { UserCreateDto, UserUpdateDto } from './dto';
 import { UserHistory } from '../user-history/user-history.entity';
 import { HashService } from '../auth/hash.service';
 
@@ -130,4 +130,35 @@ export class UserRepository {
   }
 
   // UPDATE
+
+  /**
+   * 사용자 정보 수정
+   * @param id
+   * @param userUpdateDto
+   * @returns
+   */
+  public async updateUser(
+    id: number,
+    userUpdateDto: UserUpdateDto,
+  ): Promise<User> {
+    const user = await dataSource.transaction(async (transaction) => {
+      let updatedUser = await this.userRepository.findOne({
+        where: { id: id },
+      });
+
+      updatedUser.bio = userUpdateDto.bio;
+      updatedUser.nickname = userUpdateDto.nickname;
+      updatedUser.gender = userUpdateDto.gender;
+      updatedUser = await transaction.save(updatedUser);
+
+      const userHistory = new UserHistory().set(updatedUser);
+      userHistory.userId = updatedUser.id;
+      userHistory.createdAt = new Date();
+      await transaction.save(userHistory);
+
+      return updatedUser;
+    });
+
+    return user;
+  }
 }
