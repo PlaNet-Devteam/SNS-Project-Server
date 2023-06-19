@@ -1,4 +1,4 @@
-import { USER_STATUS } from 'src/common';
+import { GENDER, USER_STATUS } from 'src/common';
 import { User } from '../user.entity';
 
 export class UserFindOneVo implements Partial<User> {
@@ -11,4 +11,5 @@ export class UserFindOneVo implements Partial<User> {
   profileImage?: string;
   bio?: string;
   id: number;
+  gender?: GENDER;
 }
