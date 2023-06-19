@@ -2,3 +2,4 @@
 // 이번 패턴은 기본적인 controller -> service -> repository 개념으로 가겠습니다.
 export * from './auth/auth.module';
 export * from './user/user.module';
+export * from './feed/feed.module';
