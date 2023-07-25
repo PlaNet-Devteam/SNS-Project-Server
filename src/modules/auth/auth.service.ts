@@ -59,6 +59,7 @@ export class AuthService {
     const data = new AuthTokenVo({
       accessToken: accessToken,
       refreshToken: refreshToken,
+      userInfo: user,
     });
     return data;
   }

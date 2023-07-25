@@ -11,7 +11,7 @@ export class UserUpdateDto
 {
   @ApiPropertyOptional()
   @IsOptional()
-  @MinLength(3)
+  @MinLength(2)
   @Transform((value: any) =>
     value.value === '' ? (value.value = null) : value.value,
   )

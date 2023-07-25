@@ -61,6 +61,7 @@ export class UserRepository {
         'user.password',
         'user.status',
         'user.nickname',
+        'user.username',
       ])
       .where('user.email = :email', { email: email })
       .getOne();
@@ -70,10 +71,10 @@ export class UserRepository {
 
   /**
    * 사용자명으로 존재하는지 확인
-   * @param nickname
+   * @param username
    * @returns User
    */
-  public async findUserByNickname(nickname: string): Promise<User> {
+  public async findUserByUsername(username: string): Promise<User> {
     const user = await this.userRepository
       .createQueryBuilder('user')
       .select([
@@ -82,8 +83,9 @@ export class UserRepository {
         'user.password',
         'user.status',
         'user.nickname',
+        'user.username',
       ])
-      .where('user.nickname = :nickname', { nickname: nickname })
+      .where('user.username = :username', { username: username })
       .getOne();
 
     return user;
