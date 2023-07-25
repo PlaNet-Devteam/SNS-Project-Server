@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AuthModule, UserModule } from './modules';
+import { AuthModule, FeedModule, UserModule } from './modules';
 import { UserLoginHistoryModule } from './modules/user-login-history/user-login-history.module';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { ENVIRONMENT, CacheClusterModule } from './config';
@@ -18,6 +18,7 @@ import { ENVIRONMENT, CacheClusterModule } from './config';
     AuthModule,
     UserModule,
     UserLoginHistoryModule,
+    FeedModule,
   ],
   controllers: [],
   providers: [],
