@@ -2,14 +2,14 @@ import { Expose, Type } from 'class-transformer';
 import { BaseDto } from './base.dto';
 import { Max, Min } from 'class-validator';
 
-export class BasePaginationDto<T> extends BaseDto<T> {
+export class BasePaginationDto {
   @Type(() => Number)
   @Min(1)
   @Expose()
-  skip: number;
+  page: number = 1;
 
   @Type(() => Number)
-  @Max(100)
+  @Max(10)
   @Expose()
-  take: number;
+  limit: number = 10;
 }

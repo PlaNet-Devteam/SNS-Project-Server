@@ -4,16 +4,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 import { Expose, Transform } from 'class-transformer';
 import { FEED_STATUS } from 'src/common';
+import { FeedImage } from 'src/modules/feed-image/feed-image.entity';
 
 export class FeedCreateDto
   extends BaseDto<FeedCreateDto>
   implements Partial<Feed>
 {
-  @ApiProperty()
-  @IsNotEmpty()
-  @Expose()
-  userId: number;
-
   @ApiPropertyOptional()
   @IsOptional()
   @Transform((value: any) =>
@@ -21,6 +17,11 @@ export class FeedCreateDto
   )
   @Expose()
   description?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Expose()
+  feedImages?: FeedImage[];
 
   @ApiProperty({ enum: FEED_STATUS })
   @IsEnum(FEED_STATUS, { each: true })

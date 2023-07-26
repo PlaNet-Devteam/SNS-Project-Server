@@ -4,7 +4,6 @@ import { FeedRepository } from './feed.repository';
 import { DatabaseModule } from 'src/config/database/database.module';
 import { FeedService } from './feed.service';
 import { FeedController } from './feed.controller';
-import { UserRepository } from '../user/user.repository';
 import { UserModule } from '../user/user.module';
 import { userProviders } from '../user/user.provider';
 

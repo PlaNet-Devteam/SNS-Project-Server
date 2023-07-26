@@ -7,7 +7,10 @@ import {
 import { FeedRepository } from './feed.repository';
 import { FeedFindOneVo } from './vo';
 import { UserRepository } from '../user/user.repository';
-import { DB_CONST_REPOSITORY } from 'src/config';
+import { DB_CONST_REPOSITORY, dataSource } from 'src/config';
+import { FeedCreateDto, FeedListDto } from './dto';
+import { Feed } from './feed.entity';
+import { PaginateResponseVo } from 'src/core';
 
 @Injectable()
 export class FeedService {
@@ -18,8 +21,10 @@ export class FeedService {
 
   // GET SERVICES
 
-  public async findAll(): Promise<FeedFindOneVo[]> {
-    const feeds = await this.feedRepository.findAll();
+  public async findAll(
+    feedListDto: FeedListDto,
+  ): Promise<PaginateResponseVo<FeedFindOneVo>> {
+    const feeds = await this.feedRepository.findAll(feedListDto);
     if (!feeds) throw new NotFoundException();
     return feeds;
   }
@@ -46,4 +51,16 @@ export class FeedService {
   }
 
   // INSERT SERVICES
+
+  /**
+   * 새로운 피드 생성
+   * @param userId
+   * @param feedCreateDto
+   */
+  public async createFeed(
+    userId: number,
+    feedCreateDto: FeedCreateDto,
+  ): Promise<Feed> {
+    return await this.feedRepository.createFeed(userId, feedCreateDto);
+  }
 }
