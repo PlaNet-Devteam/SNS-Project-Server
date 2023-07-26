@@ -121,7 +121,7 @@ export class AuthService {
       secret: process.env.JWT_SECRET_KEY,
       expiresIn:
         process.env.NODE_ENV === ENVIRONMENT.DEVELOPMENT
-          ? '600s'
+          ? '60000s'
           : `${process.env.JWT_EXPIRES_IN}`,
     };
 

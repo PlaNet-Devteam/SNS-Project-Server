@@ -8,15 +8,17 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { FeedService } from './feed.service';
 import { Feed } from './feed.entity';
-import { BaseResponseVo, UserGuard } from 'src/core';
+import { BaseResponseVo, PaginateResponseVo, UserGuard } from 'src/core';
 import { FeedFindOneVo } from './vo';
 import { UserInfo } from 'src/common';
 import { User } from '../user/user.entity';
+import { FeedCreateDto, FeedListDto } from './dto';
 
 @UseGuards(new UserGuard())
 @Controller('feed')
@@ -28,9 +30,12 @@ export class FeedController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  public async findAll(): Promise<BaseResponseVo<FeedFindOneVo[]>> {
-    return new BaseResponseVo<FeedFindOneVo[]>(
-      await this.feedService.findAll(),
+  public async findAll(
+    @Query() feedListDto: FeedListDto,
+  ): Promise<BaseResponseVo<PaginateResponseVo<FeedFindOneVo>>> {
+    console.log('feedListDto', feedListDto);
+    return new BaseResponseVo<PaginateResponseVo<FeedFindOneVo>>(
+      await this.feedService.findAll(feedListDto),
     );
   }
 
@@ -62,4 +67,19 @@ export class FeedController {
   }
 
   // POST ENDPOINTS
+
+  /**
+   * 새로운 피드 생성
+   * @param feedCreateDto
+   * @returns null
+   */
+  @UseGuards(new UserGuard())
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  public async createFeed(
+    @UserInfo() user: User,
+    @Body() feedCreateDto: FeedCreateDto,
+  ): Promise<Feed> {
+    return await this.feedService.createFeed(user.id, feedCreateDto);
+  }
 }

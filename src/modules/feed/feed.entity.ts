@@ -1,8 +1,9 @@
 import { IsEnum, IsNotEmpty } from 'class-validator';
 import { FEED_STATUS, YN } from 'src/common';
 import { BaseUpdateEntity } from 'src/core';
-import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 import { User } from '../user/user.entity';
+import { FeedImage } from '../feed-image/feed-image.entity';
 
 @Entity({ name: 'feed' })
 export class Feed extends BaseUpdateEntity<Feed> {
@@ -17,10 +18,6 @@ export class Feed extends BaseUpdateEntity<Feed> {
   })
   @IsNotEmpty()
   userId: number;
-
-  @OneToOne((type) => User, (user) => user.id)
-  @JoinColumn({ name: 'user_id' })
-  user: User;
 
   @Column({
     name: 'description',
@@ -54,4 +51,11 @@ export class Feed extends BaseUpdateEntity<Feed> {
   @Column()
   @IsEnum(FEED_STATUS)
   status?: FEED_STATUS;
+
+  @OneToOne((type) => User, (user) => user.id)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
+
+  @OneToMany((type) => FeedImage, (feedImages) => feedImages.feed)
+  feedImages?: FeedImage[];
 }
