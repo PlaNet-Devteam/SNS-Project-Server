@@ -42,11 +42,11 @@ export class FeedController {
   @Get('/:username')
   @HttpCode(HttpStatus.OK)
   public async findAllByUser(
-    @UserInfo() user: User,
     @Param('username') username: string,
+    @Query() feedListDto: FeedListDto,
   ): Promise<BaseResponseVo<FeedFindOneVo[]>> {
     return new BaseResponseVo<FeedFindOneVo[]>(
-      await this.feedService.findAllByUser(username),
+      await this.feedService.findAllByUser(username, feedListDto),
     );
   }
 
