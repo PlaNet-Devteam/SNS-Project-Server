@@ -7,12 +7,15 @@ import { FEED_STATUS, YN } from 'src/common';
 import { FeedCreateDto, FeedListDto } from './dto';
 import { FeedImage } from '../feed-image/feed-image.entity';
 import { BaseResponseVo, PaginateResponseVo } from 'src/core';
+import { User } from '../user/user.entity';
 
 @Injectable()
 export class FeedRepository {
   constructor(
     @Inject(DB_CONST_REPOSITORY.FEED)
-    private readonly feedRepository: Repository<Feed>, // @Inject(DB_CONST_REPOSITORY.FEED_IMAGE) // private readonly feedImageRepository: Repository<FeedImage>,
+    private readonly feedRepository: Repository<Feed>,
+    @Inject(DB_CONST_REPOSITORY.USER)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   // SELECTS
@@ -181,6 +184,13 @@ export class FeedRepository {
           }),
         );
       }
+      // TODO: user feed count 증가
+      let user = await this.userRepository.findOne({
+        where: { id: userId },
+      });
+
+      user.feedCount++;
+      user = await transaction.save(user);
       // TODO: description 에 tag 있는 경우 tag, mapper_feed_tag 테이블 생성
 
       return newFeed;
