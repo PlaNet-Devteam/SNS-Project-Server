@@ -7,12 +7,15 @@ import { FEED_STATUS, YN } from 'src/common';
 import { FeedCreateDto, FeedListDto } from './dto';
 import { FeedImage } from '../feed-image/feed-image.entity';
 import { BaseResponseVo, PaginateResponseVo } from 'src/core';
+import { User } from '../user/user.entity';
 
 @Injectable()
 export class FeedRepository {
   constructor(
     @Inject(DB_CONST_REPOSITORY.FEED)
-    private readonly feedRepository: Repository<Feed>, // @Inject(DB_CONST_REPOSITORY.FEED_IMAGE) // private readonly feedImageRepository: Repository<FeedImage>,
+    private readonly feedRepository: Repository<Feed>,
+    @Inject(DB_CONST_REPOSITORY.USER)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   // SELECTS
@@ -24,10 +27,8 @@ export class FeedRepository {
   public async findAll(
     feedListDto?: FeedListDto,
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
-    console.log('feedListDto', feedListDto);
-    const page = feedListDto?.page || 1;
-    const limit = feedListDto?.limit || 10;
-
+    const page = feedListDto?.page;
+    const limit = feedListDto?.limit;
     const offset = (page - 1) * limit;
 
     const feeds = this.feedRepository
@@ -54,7 +55,8 @@ export class FeedRepository {
       .offset(offset)
       .limit(limit);
 
-    const items = await feeds.getMany();
+    const [items, totalCount] = await feeds.getManyAndCount();
+    const lasPage = Math.ceil(totalCount / limit);
 
     for (const item of items) {
       item.feedImages = await FeedImage.createQueryBuilder('feedImage')
@@ -64,8 +66,12 @@ export class FeedRepository {
 
     return {
       items: items,
-      totalCount: items.length,
-      page: 2,
+      totalCount: totalCount,
+      pageInfo: {
+        page,
+        limit,
+        isLast: page === lasPage ? true : false,
+      },
     };
   }
 
@@ -74,11 +80,17 @@ export class FeedRepository {
    * @param userId
    * @returns
    */
-  public async findAllByUser(userId: number): Promise<FeedFindOneVo[]> {
-    const feeds = await this.feedRepository
+  public async findAllByUser(
+    userId: number,
+    feedListDto?: FeedListDto,
+  ): Promise<PaginateResponseVo<FeedFindOneVo>> {
+    const page = feedListDto?.page;
+    const limit = feedListDto?.limit;
+    const offset = (page - 1) * limit;
+
+    const feeds = this.feedRepository
       .createQueryBuilder('feed')
       .leftJoinAndSelect('feed.user', 'user')
-      .leftJoinAndSelect('feed.feedImages', 'feedImages')
       .select([
         'feed.id',
         'feed.userId',
@@ -93,17 +105,32 @@ export class FeedRepository {
         'user.username',
         'user.nickname',
         'user.profileImage',
-        'feedImages.feedId',
-        'feedImages.image',
-        'feedImages.sortOrder',
       ])
       .where('feed.displayYn = :displayYn', { displayYn: YN.Y })
       .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE })
       .andWhere('feed.userId = :userId', { userId: userId })
       .orderBy('feed.createdAt', 'DESC')
-      .getMany();
+      .offset(offset)
+      .limit(limit);
 
-    return feeds;
+    const [items, totalCount] = await feeds.getManyAndCount();
+    const lasPage = Math.ceil(totalCount / limit);
+
+    for (const item of items) {
+      item.feedImages = await FeedImage.createQueryBuilder('feedImage')
+        .where('feedImage.feedId = :feedId', { feedId: item.id })
+        .getMany();
+    }
+
+    return {
+      items: items,
+      totalCount: totalCount,
+      pageInfo: {
+        page,
+        limit,
+        isLast: page === lasPage ? true : false,
+      },
+    };
   }
 
   /**
@@ -157,6 +184,13 @@ export class FeedRepository {
           }),
         );
       }
+      // TODO: user feed count 증가
+      let user = await this.userRepository.findOne({
+        where: { id: userId },
+      });
+
+      user.feedCount++;
+      user = await transaction.save(user);
       // TODO: description 에 tag 있는 경우 tag, mapper_feed_tag 테이블 생성
 
       return newFeed;

@@ -22,19 +22,22 @@ export class FeedService {
   // GET SERVICES
 
   public async findAll(
-    feedListDto: FeedListDto,
+    feedListDto?: FeedListDto,
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
     const feeds = await this.feedRepository.findAll(feedListDto);
     if (!feeds) throw new NotFoundException();
     return feeds;
   }
 
-  public async findAllByUser(username: string): Promise<FeedFindOneVo[]> {
+  public async findAllByUser(
+    username: string,
+    feedListDto?: FeedListDto,
+  ): Promise<PaginateResponseVo<FeedFindOneVo>> {
     const user = await this.userRepository.findUserByUsername(username);
     if (!user) throw new NotFoundException();
     console.log(user);
 
-    const feeds = await this.feedRepository.findAllByUser(user.id);
+    const feeds = await this.feedRepository.findAllByUser(user.id, feedListDto);
     if (!feeds) throw new NotFoundException();
     return feeds;
   }
