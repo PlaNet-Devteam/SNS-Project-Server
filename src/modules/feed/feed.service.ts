@@ -66,4 +66,17 @@ export class FeedService {
   ): Promise<Feed> {
     return await this.feedRepository.createFeed(userId, feedCreateDto);
   }
+
+  // DELETE SERVICES
+
+  /**
+   * 피드 삭제
+   * @param userId
+   * @param feedId
+   */
+  public async deleteFeed(userId: number, feedId: number) {
+    const feed = await this.feedRepository.findOneFeed(feedId);
+    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    return await this.feedRepository.deleteFeed(userId, feedId);
+  }
 }

@@ -200,4 +200,38 @@ export class FeedRepository {
   }
 
   // UPDATE
+
+  /**
+   *  피드 삭제
+   * @param userId
+   * @param feedId
+   * @returns Feed
+   */
+  public async deleteFeed(userId: number, feedId: number) {
+    await dataSource.transaction(async (transaction) => {
+      // * FEED IMAGE 삭제
+      await dataSource
+        .createQueryBuilder()
+        .delete()
+        .from(FeedImage)
+        .where('feedId = :feedId', { feedId: feedId })
+        .execute();
+
+      // * FEED 삭제
+      await dataSource
+        .createQueryBuilder()
+        .delete()
+        .from(Feed)
+        .where('id = :id', { id: feedId })
+        .execute();
+
+      // * USER FEED COUNT 감소
+      let user = await this.userRepository.findOne({
+        where: { id: userId },
+      });
+
+      user.feedCount--;
+      user = await transaction.save(user);
+    });
+  }
 }

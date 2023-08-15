@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -20,7 +21,6 @@ import { UserInfo } from 'src/common';
 import { User } from '../user/user.entity';
 import { FeedCreateDto, FeedListDto } from './dto';
 
-@UseGuards(new UserGuard())
 @Controller('feed')
 @ApiTags('FEED')
 export class FeedController {
@@ -81,5 +81,23 @@ export class FeedController {
     @Body() feedCreateDto: FeedCreateDto,
   ): Promise<Feed> {
     return await this.feedService.createFeed(user.id, feedCreateDto);
+  }
+
+  // DELETE ENDPOINTS
+
+  /**
+   * 피드 삭제
+   * @param user
+   * @param id
+   * @returns
+   */
+  @UseGuards(new UserGuard())
+  @Delete(':id([0-9]+)')
+  @HttpCode(HttpStatus.OK)
+  public async deleteFeed(
+    @UserInfo() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return await this.feedService.deleteFeed(user.id, id);
   }
 }
