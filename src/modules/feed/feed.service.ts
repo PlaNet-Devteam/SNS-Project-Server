@@ -7,8 +7,7 @@ import {
 import { FeedRepository } from './feed.repository';
 import { FeedFindOneVo } from './vo';
 import { UserRepository } from '../user/user.repository';
-import { DB_CONST_REPOSITORY, dataSource } from 'src/config';
-import { FeedCreateDto, FeedListDto } from './dto';
+import { FeedCreateDto, FeedListDto, FeedUpdateDto } from './dto';
 import { Feed } from './feed.entity';
 import { PaginateResponseVo } from 'src/core';
 
@@ -65,5 +64,34 @@ export class FeedService {
     feedCreateDto: FeedCreateDto,
   ): Promise<Feed> {
     return await this.feedRepository.createFeed(userId, feedCreateDto);
+  }
+
+  // UPDATE SERVICES
+
+  /**
+   * 피드 수정
+   * @param userId
+   * @param feedUpdateDto
+   */
+  public async updateFeed(
+    feedId: number,
+    feedUpdateDto: FeedUpdateDto,
+  ): Promise<FeedFindOneVo> {
+    const feed = await this.feedRepository.findOneFeed(feedId);
+    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    return await this.feedRepository.updateFeed(feedId, feedUpdateDto);
+  }
+
+  // DELETE SERVICES
+
+  /**
+   * 피드 삭제
+   * @param userId
+   * @param feedId
+   */
+  public async deleteFeed(userId: number, feedId: number) {
+    const feed = await this.feedRepository.findOneFeed(feedId);
+    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    return await this.feedRepository.deleteFeed(userId, feedId);
   }
 }

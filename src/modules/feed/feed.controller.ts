@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -18,17 +19,16 @@ import { BaseResponseVo, PaginateResponseVo, UserGuard } from 'src/core';
 import { FeedFindOneVo } from './vo';
 import { UserInfo } from 'src/common';
 import { User } from '../user/user.entity';
-import { FeedCreateDto, FeedListDto } from './dto';
+import { FeedCreateDto, FeedListDto, FeedUpdateDto } from './dto';
 
-@UseGuards(new UserGuard())
-@Controller('feed')
+@Controller()
 @ApiTags('FEED')
 export class FeedController {
   constructor(private readonly feedService: FeedService) {}
 
   // GET ENDPOINTS
 
-  @Get()
+  @Get('/feed')
   @HttpCode(HttpStatus.OK)
   public async findAll(
     @Query() feedListDto: FeedListDto,
@@ -39,7 +39,7 @@ export class FeedController {
     );
   }
 
-  @Get('/:username')
+  @Get('/feed/user/:username')
   @HttpCode(HttpStatus.OK)
   public async findAllByUser(
     @Param('username') username: string,
@@ -56,11 +56,9 @@ export class FeedController {
    * @returns
    */
 
-  @Get(':id([0-9]+)')
+  @Get('/feed/:id([0-9]+)')
   @HttpCode(HttpStatus.OK)
-  public async findOneFeed(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<BaseResponseVo<FeedFindOneVo>> {
+  public async findOneFeed(@Param('id', ParseIntPipe) id: number) {
     return new BaseResponseVo<FeedFindOneVo>(
       await this.feedService.findOne(id),
     );
@@ -71,7 +69,7 @@ export class FeedController {
   /**
    * 새로운 피드 생성
    * @param feedCreateDto
-   * @returns null
+   * @returns Feed
    */
   @UseGuards(new UserGuard())
   @Post()
@@ -81,5 +79,41 @@ export class FeedController {
     @Body() feedCreateDto: FeedCreateDto,
   ): Promise<Feed> {
     return await this.feedService.createFeed(user.id, feedCreateDto);
+  }
+
+  // PATCH ENDPOINTS
+
+  /**
+   * 피드 업데이트
+   * @param feedUpdateDto
+   * @returns Feed
+   */
+  @UseGuards(new UserGuard())
+  @Patch('/feed/:id([0-9]+)')
+  @HttpCode(HttpStatus.OK)
+  public async updateFeed(
+    @UserInfo() user: User,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() feedUpdateDto: FeedUpdateDto,
+  ): Promise<FeedFindOneVo> {
+    return await this.feedService.updateFeed(id, feedUpdateDto);
+  }
+
+  // DELETE ENDPOINTS
+
+  /**
+   * 피드 삭제
+   * @param user
+   * @param id
+   * @returns
+   */
+  @UseGuards(new UserGuard())
+  @Delete('/feed/:id([0-9]+)')
+  @HttpCode(HttpStatus.OK)
+  public async deleteFeed(
+    @UserInfo() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return await this.feedService.deleteFeed(user.id, id);
   }
 }
