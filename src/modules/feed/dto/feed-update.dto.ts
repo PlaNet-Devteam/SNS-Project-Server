@@ -4,6 +4,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, MinLength } from 'class-validator';
 import { Expose, Transform } from 'class-transformer';
 import { GENDER } from 'src/common';
+import { FeedImage } from 'src/modules/feed-image/feed-image.entity';
 
 export class FeedUpdateDto
   extends BaseDto<FeedUpdateDto>
@@ -16,4 +17,14 @@ export class FeedUpdateDto
   )
   @Expose()
   description?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Expose()
+  feedImages?: FeedImage[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Expose()
+  newFeedImages?: FeedImage[];
 }

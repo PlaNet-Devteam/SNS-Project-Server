@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Feed } from './feed.entity';
 import { FeedFindOneVo } from './vo';
 import { FEED_STATUS, YN } from 'src/common';
-import { FeedCreateDto, FeedListDto } from './dto';
+import { FeedCreateDto, FeedListDto, FeedUpdateDto } from './dto';
 import { FeedImage } from '../feed-image/feed-image.entity';
 import { BaseResponseVo, PaginateResponseVo } from 'src/core';
 import { User } from '../user/user.entity';
@@ -141,16 +141,28 @@ export class FeedRepository {
   public async findOneFeed(id: number): Promise<FeedFindOneVo> {
     const feed = await this.feedRepository
       .createQueryBuilder('feed')
+      .leftJoinAndSelect('feed.user', 'user')
       .select([
         'feed.id',
+        'feed.userId',
         'feed.description',
+        'feed.status',
         'feed.likeCount',
         'feed.commentCount',
-        'feed.show_like_count_yn',
-        'feed.status',
+        'feed.showLikeCountYn',
+        'feed.createdAt',
+        'feed.updatedAt',
+        'user.id',
+        'user.username',
+        'user.nickname',
+        'user.profileImage',
       ])
       .where('feed.id = :id', { id: id })
       .getOne();
+
+    feed.feedImages = await FeedImage.createQueryBuilder('feedImage')
+      .where('feedImage.feedId = :feedId', { feedId: feed.id })
+      .getMany();
 
     return feed;
   }
@@ -200,6 +212,49 @@ export class FeedRepository {
   }
 
   // UPDATE
+
+  /**
+   *  피드 수정
+   * @param feedId
+   * @param feedUpdateDto
+   * @returns Feed
+   */
+  public async updateFeed(
+    feedId: number,
+    feedUpdateDto: FeedUpdateDto,
+  ): Promise<FeedFindOneVo> {
+    const feed = await dataSource.transaction(async (transaction) => {
+      let feed = await this.findOneFeed(feedId);
+      // TODO: 기존 이미지 삭제하기
+
+      // TODO: 새로운 이미지 추가하기
+      if (
+        feedUpdateDto.newFeedImages &&
+        feedUpdateDto.newFeedImages.length > 0
+      ) {
+        await Promise.all(
+          feedUpdateDto.newFeedImages.map(async (image) => {
+            let newImage = new FeedImage().set({
+              feedId: feed.id,
+              image: image.image,
+              sortOrder: image.sortOrder,
+            });
+            newImage = await transaction.save(newImage);
+          }),
+        );
+        feedUpdateDto.feedImages = [
+          ...feedUpdateDto.feedImages,
+          ...feedUpdateDto.newFeedImages,
+        ];
+      }
+      feed.description = feedUpdateDto.description;
+      feed.feedImages = feedUpdateDto.feedImages;
+      feed = await transaction.save(feed);
+      return feed;
+    });
+
+    return feed;
+  }
 
   /**
    *  피드 삭제
