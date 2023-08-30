@@ -72,7 +72,7 @@ export class FeedController {
    * @returns Feed
    */
   @UseGuards(new UserGuard())
-  @Post()
+  @Post('/feed')
   @HttpCode(HttpStatus.CREATED)
   public async createFeed(
     @UserInfo() user: User,
