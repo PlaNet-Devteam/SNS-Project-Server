@@ -105,6 +105,7 @@ export class FeedRepository {
         'user.username',
         'user.nickname',
         'user.profileImage',
+        'user.feedCount',
       ])
       .where('feed.displayYn = :displayYn', { displayYn: YN.Y })
       .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE })

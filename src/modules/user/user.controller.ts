@@ -24,7 +24,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   /**
-   * 아이이디로 상세 호출
+   * 아이디로 상세 호출
    * @param id
    * @returns
    */
@@ -35,6 +35,21 @@ export class UserController {
   ): Promise<BaseResponseVo<UserFindOneVo>> {
     return new BaseResponseVo<UserFindOneVo>(
       await this.userService.findOne(id),
+    );
+  }
+
+  /**
+   * 사용자명으로 상세 호출
+   * @param id
+   * @returns
+   */
+  @Get('username/:username')
+  @HttpCode(HttpStatus.OK)
+  public async findOneUserByUsername(
+    @Param('username') username: string,
+  ): Promise<BaseResponseVo<UserFindOneVo>> {
+    return new BaseResponseVo<UserFindOneVo>(
+      await this.userService.findUserByUsername(username),
     );
   }
 
@@ -70,13 +85,12 @@ export class UserController {
   /**
    *  사용자 정보 수정
    */
-  @UseGuards(new UserGuard())
   @Patch(':id([0-9]+)')
   @HttpCode(HttpStatus.OK)
   public async updateUser(
-    @UserInfo() user: User,
+    @Param('id', ParseIntPipe) id: number,
     @Body() userUpdateDto: UserUpdateDto,
   ) {
-    return await this.userService.updateUser(user.id, userUpdateDto);
+    return await this.userService.updateUser(id, userUpdateDto);
   }
 }
