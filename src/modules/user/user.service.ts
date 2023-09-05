@@ -24,6 +24,17 @@ export class UserService {
     return user;
   }
 
+  /**
+   *
+   * @param username
+   * @returns UserFindOneVo
+   */
+  public async findUserByUsername(username: string): Promise<UserFindOneVo> {
+    const user = await this.userRepository.findUserByUsername(username);
+    if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
+    return user;
+  }
+
   // INSERT SERVICES
 
   /**
@@ -44,7 +55,7 @@ export class UserService {
    */
   public async updateUser(id: number, userUpdateDto: UserUpdateDto) {
     const user = await this.userRepository.findOneUser(id);
-    if (!user) throw new NotFoundException();
+    if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
     await this.userRepository.updateUser(id, userUpdateDto);
   }
 }

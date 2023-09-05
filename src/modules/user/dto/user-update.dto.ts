@@ -31,4 +31,9 @@ export class UserUpdateDto
   @IsOptional()
   @Expose()
   gender?: GENDER = GENDER.NO_ANSWER;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Expose()
+  profileImage?: string;
 }

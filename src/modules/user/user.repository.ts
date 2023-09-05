@@ -79,11 +79,17 @@ export class UserRepository {
       .createQueryBuilder('user')
       .select([
         'user.id',
-        'user.email',
-        'user.password',
-        'user.status',
-        'user.nickname',
         'user.username',
+        'user.password',
+        'user.email',
+        'user.nickname',
+        'user.followingCount',
+        'user.feedCount',
+        'user.followerCount',
+        'user.bio',
+        'user.profileImage',
+        'user.status',
+        'user.gender',
       ])
       .where('user.username = :username', { username: username })
       .getOne();
@@ -152,6 +158,7 @@ export class UserRepository {
       updatedUser.bio = userUpdateDto.bio;
       updatedUser.nickname = userUpdateDto.nickname;
       updatedUser.gender = userUpdateDto.gender;
+      updatedUser.profileImage = userUpdateDto.profileImage;
       updatedUser = await transaction.save(updatedUser);
 
       const userHistory = new UserHistory().set(updatedUser);
