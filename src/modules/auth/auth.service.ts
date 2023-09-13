@@ -128,6 +128,7 @@ export class AuthService {
     const accessTokenInfo: UserPayload = {
       _id: user.id,
       email: user.email,
+      username: user.username,
       nickname: user.nickname,
       status: user.status,
     };
@@ -152,6 +153,7 @@ export class AuthService {
     const accessTokenInfo: UserPayload = {
       _id: user.id,
       email: user.email,
+      username: user.username,
       nickname: user.nickname,
       status: user.status,
     };
