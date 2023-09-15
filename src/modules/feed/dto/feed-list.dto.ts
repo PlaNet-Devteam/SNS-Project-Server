@@ -8,4 +8,9 @@ export class FeedListDto extends BasePaginationDto<FeedListDto> {
   @IsOptional()
   @Expose()
   tagName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Expose()
+  userId?: number;
 }

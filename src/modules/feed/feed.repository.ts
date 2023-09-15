@@ -8,6 +8,7 @@ import { FeedCreateDto, FeedListDto, FeedUpdateDto } from './dto';
 import { FeedImage } from '../feed-image/feed-image.entity';
 import { BaseResponseVo, PaginateResponseVo } from 'src/core';
 import { User } from '../user/user.entity';
+import { FeedLike } from '../feed-like/feed-like.entity';
 
 @Injectable()
 export class FeedRepository {
@@ -62,6 +63,19 @@ export class FeedRepository {
       item.feedImages = await FeedImage.createQueryBuilder('feedImage')
         .where('feedImage.feedId = :feedId', { feedId: item.id })
         .getMany();
+      // 좋아요 체크 여부
+      if (feedListDto.userId) {
+        const liked = await FeedLike.createQueryBuilder('feedLike')
+          .where('feedLike.feedId = :feedId', { feedId: item.id })
+          .andWhere('feedLike.userId = :userId', { userId: feedListDto.userId })
+          .getOne();
+        if (liked) {
+          item.likedYn = true;
+        } else {
+          item.likedYn = false;
+        }
+      }
+      // TODO: 좋아오 유저
     }
 
     return {
@@ -288,6 +302,38 @@ export class FeedRepository {
 
       user.feedCount--;
       user = await transaction.save(user);
+    });
+  }
+
+  /** 피드 좋아요 */
+  public async likeFeed(userId: number, feedId: number) {
+    await dataSource.transaction(async (transaction) => {
+      let newLike = new FeedLike().set({
+        feedId,
+        userId,
+      });
+      newLike = await transaction.save(newLike);
+
+      let feed = await this.findOneFeed(feedId);
+      feed.likeCount++;
+      feed = await transaction.save(feed);
+    });
+  }
+
+  /** 피드 좋아요 해제 */
+  public async deleteLikeFeed(userId: number, feedId: number) {
+    await dataSource.transaction(async (transaction) => {
+      await dataSource
+        .createQueryBuilder()
+        .delete()
+        .from(FeedLike)
+        .where('feedId = :feedId', { feedId: feedId })
+        .andWhere('userId = :userId', { userId: userId })
+        .execute();
+
+      let feed = await this.findOneFeed(feedId);
+      feed.likeCount--;
+      feed = await transaction.save(feed);
     });
   }
 }
