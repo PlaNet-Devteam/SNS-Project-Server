@@ -21,9 +21,13 @@ export class CommentService {
    * @returns
    */
   public async findAll(
+    feedId: number,
     commentListDto?: CommentListDto,
   ): Promise<PaginateResponseVo<CommentFindOneVo>> {
-    const comments = await this.commentRepository.findAll(commentListDto);
+    const comments = await this.commentRepository.findAll(
+      feedId,
+      commentListDto,
+    );
     if (!comments) throw new NotFoundException();
     return comments;
   }

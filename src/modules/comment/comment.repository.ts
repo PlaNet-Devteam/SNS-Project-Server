@@ -19,10 +19,11 @@ export class CommentRepository {
   // SELECTS
 
   /**
-   * 전체 피드 목록
+   * 피드별 코멘트 목록
    * @returns
    */
   public async findAll(
+    feedId: number,
     commentListDto?: CommentListDto,
   ): Promise<PaginateResponseVo<CommentFindOneVo>> {
     const page = commentListDto?.page;
@@ -45,7 +46,8 @@ export class CommentRepository {
         'user.nickname',
         'user.profileImage',
       ])
-      .orderBy('comment.createdAt', 'DESC')
+      .where('comment.feedId = :feedId', { feedId: feedId })
+      .orderBy('comment.createdAt', 'ASC')
       .offset(offset)
       .limit(limit);
 

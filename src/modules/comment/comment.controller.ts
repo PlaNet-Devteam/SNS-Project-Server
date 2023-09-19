@@ -30,11 +30,12 @@ export class CommentController {
   @Get('/feed/:id([0-9]+)/comment')
   @HttpCode(HttpStatus.OK)
   public async findAll(
+    @Param('id', ParseIntPipe) feedId: number,
     @Query() commentListDto: CommentListDto,
   ): Promise<BaseResponseVo<PaginateResponseVo<CommentFindOneVo>>> {
     console.log('commentListDto', commentListDto);
     return new BaseResponseVo<PaginateResponseVo<CommentFindOneVo>>(
-      await this.commentSerivce.findAll(commentListDto),
+      await this.commentSerivce.findAll(feedId, commentListDto),
     );
   }
 
