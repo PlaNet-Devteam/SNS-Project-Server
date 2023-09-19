@@ -229,27 +229,27 @@ export class FeedRepository {
       // TODO: 기존 이미지 삭제하기
 
       // TODO: 새로운 이미지 추가하기
-      if (
-        feedUpdateDto.newFeedImages &&
-        feedUpdateDto.newFeedImages.length > 0
-      ) {
-        await Promise.all(
-          feedUpdateDto.newFeedImages.map(async (image) => {
-            let newImage = new FeedImage().set({
-              feedId: feed.id,
-              image: image.image,
-              sortOrder: image.sortOrder,
-            });
-            newImage = await transaction.save(newImage);
-          }),
-        );
-        feedUpdateDto.feedImages = [
-          ...feedUpdateDto.feedImages,
-          ...feedUpdateDto.newFeedImages,
-        ];
-      }
+      // if (
+      //   feedUpdateDto.newFeedImages &&
+      //   feedUpdateDto.newFeedImages.length > 0
+      // ) {
+      //   await Promise.all(
+      //     feedUpdateDto.newFeedImages.map(async (image) => {
+      //       let newImage = new FeedImage().set({
+      //         feedId: feed.id,
+      //         image: image.image,
+      //         sortOrder: image.sortOrder,
+      //       });
+      //       newImage = await transaction.save(newImage);
+      //     }),
+      //   );
+      //   feedUpdateDto.feedImages = [
+      //     ...feedUpdateDto.feedImages,
+      //     ...feedUpdateDto.newFeedImages,
+      //   ];
+      // }
       feed.description = feedUpdateDto.description;
-      feed.feedImages = feedUpdateDto.feedImages;
+      // feed.feedImages = feedUpdateDto.feedImages;
       feed = await transaction.save(feed);
       return feed;
     });
