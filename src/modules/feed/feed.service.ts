@@ -94,4 +94,16 @@ export class FeedService {
     if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
     return await this.feedRepository.deleteFeed(userId, feedId);
   }
+
+  public async likeFeed(userId: number, feedId: number) {
+    const feed = await this.feedRepository.findOneFeed(feedId);
+    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    return await this.feedRepository.likeFeed(userId, feedId);
+  }
+
+  public async deleteLikeFeed(userId: number, feedId: number) {
+    const feed = await this.feedRepository.findOneFeed(feedId);
+    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    return await this.feedRepository.deleteLikeFeed(userId, feedId);
+  }
 }

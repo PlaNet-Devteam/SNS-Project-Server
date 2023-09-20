@@ -116,4 +116,26 @@ export class FeedController {
   ) {
     return await this.feedService.deleteFeed(user.id, id);
   }
+
+  /** 피드 좋아요 */
+  @UseGuards(new UserGuard())
+  @Post('/feed/:id([0-9]+)/like')
+  @HttpCode(HttpStatus.CREATED)
+  public async likeFeed(
+    @UserInfo() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return await this.feedService.likeFeed(user.id, id);
+  }
+
+  /** 피드 좋아요 */
+  @UseGuards(new UserGuard())
+  @Delete('/feed/:id([0-9]+)/like')
+  @HttpCode(HttpStatus.OK)
+  public async deleteLikeFeed(
+    @UserInfo() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return await this.feedService.deleteLikeFeed(user.id, id);
+  }
 }
