@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DB_CONST_REPOSITORY, dataSource } from 'src/config';
-import { CommentCreateDto, CommentListDto } from './dto';
+import { CommentCreateDto, CommentListDto, CommentUpdateDto } from './dto';
 import { Comment } from './comment.entity';
 import { Repository } from 'typeorm';
 import { Feed } from '../feed/feed.entity';
@@ -47,7 +47,7 @@ export class CommentRepository {
         'user.profileImage',
       ])
       .where('comment.feedId = :feedId', { feedId: feedId })
-      .orderBy('comment.createdAt', 'ASC')
+      .orderBy('comment.createdAt', commentListDto.orderBy)
       .offset(offset)
       .limit(limit);
 
@@ -63,6 +63,33 @@ export class CommentRepository {
         isLast: page === lasPage ? true : false,
       },
     };
+  }
+
+  /**
+   * 코멘트 상세
+   * @param id
+   * @returns CommentFindOneVo
+   */
+  public async findOneComment(id: number): Promise<CommentFindOneVo> {
+    const comment = await this.commentRepository
+      .createQueryBuilder('comment')
+      .leftJoinAndSelect('comment.user', 'user')
+      .select([
+        'comment.id',
+        'comment.userId',
+        'comment.feedId',
+        'comment.comment',
+        'comment.createdAt',
+        'comment.updatedAt',
+        'user.id',
+        'user.username',
+        'user.nickname',
+        'user.profileImage',
+      ])
+      .where('comment.id = :id', { id: id })
+      .getOne();
+
+    return comment;
   }
 
   // INSERTS
@@ -97,5 +124,47 @@ export class CommentRepository {
     });
 
     return comment;
+  }
+
+  /**
+   *
+   * @param commentId
+   * @param comemntUpdateDto
+   */
+  async updateComemnt(
+    commentId: number,
+    comemntUpdateDto: CommentUpdateDto,
+  ): Promise<CommentFindOneVo> {
+    const comment = await dataSource.transaction(async (transaction) => {
+      const comment = await this.findOneComment(commentId);
+      comment.comment = comemntUpdateDto.comment;
+      await transaction.save(comment);
+      return comment;
+    });
+    return comment;
+  }
+
+  /**
+   *
+   * @param feedId
+   * @param commentId
+   */
+  async deleteComemnt(feedId: number, commentId: number) {
+    await dataSource.transaction(async (transaction) => {
+      await dataSource
+        .createQueryBuilder()
+        .delete()
+        .from(Comment)
+        .where('id = :id', { id: commentId })
+        .execute();
+
+      // feed reply count 감소
+      let feed = await this.feedRepository.findOne({
+        where: { id: feedId },
+      });
+
+      feed.commentCount--;
+      feed = await transaction.save(feed);
+    });
   }
 }

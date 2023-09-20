@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -15,7 +17,7 @@ import { CommentService } from './comment.service';
 import { BaseResponseVo, PaginateResponseVo, UserGuard } from 'src/core';
 import { UserInfo } from 'src/common';
 import { User } from '../user/user.entity';
-import { CommentCreateDto, CommentListDto } from './dto';
+import { CommentCreateDto, CommentListDto, CommentUpdateDto } from './dto';
 import { Comment } from './comment.entity';
 import { CommentFindOneVo } from './vo';
 
@@ -39,6 +41,21 @@ export class CommentController {
     );
   }
 
+  /**
+   * 코멘트 상세
+   * @param commentId
+   * @returns
+   */
+  @Get('/comment/:id([0-9]+)')
+  @HttpCode(HttpStatus.OK)
+  public async findOne(
+    @Param('id', ParseIntPipe) commentId: number,
+  ): Promise<BaseResponseVo<CommentFindOneVo>> {
+    return new BaseResponseVo<CommentFindOneVo>(
+      await this.commentSerivce.findOne(commentId),
+    );
+  }
+
   // POST ENDPOINTS
 
   /**
@@ -59,5 +76,30 @@ export class CommentController {
       feedId,
       comemntCreateDto,
     );
+  }
+
+  @Patch('/comment/:id([0-9]+)')
+  @HttpCode(HttpStatus.OK)
+  public async updateComment(
+    @UserInfo() user: User,
+    @Param('id', ParseIntPipe) commentId: number,
+    @Body() comemntUpdateDto: CommentUpdateDto,
+  ): Promise<CommentFindOneVo> {
+    return await this.commentSerivce.updateComemnt(commentId, comemntUpdateDto);
+  }
+
+  /**
+   * 코멘트 삭제
+   * @param comemntCreateDto
+   * @returns Comment
+   */
+
+  @Delete('/feed/:feedId([0-9]+)/comment/:commentId([0-9]+)')
+  @HttpCode(HttpStatus.OK)
+  public async deleteComment(
+    @Param('feedId', ParseIntPipe) feedId: number,
+    @Param('commentId', ParseIntPipe) commentId: number,
+  ) {
+    return await this.commentSerivce.deleteComemnt(feedId, commentId);
   }
 }
