@@ -13,6 +13,7 @@ import helmet from 'helmet';
 import { ENVIRONMENT, dataSource } from './config';
 import * as cookieParser from 'cookie-parser';
 import { ClassTransformOptions } from 'class-transformer';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 
 // const debug = Debug(`app:${basename(__dirname)}:${basename(__filename)}`);
 
@@ -77,7 +78,8 @@ async function bootstrap() {
   );
 
   app.enableShutdownHooks();
-  await app.listen(process.env.SERVER_PORT || 4300, '0.0.0.0');
+  app.useWebSocketAdapter(new IoAdapter(app));
+  await app.listen(process.env.SERVER_PORT || 4300);
 
   // display server url
   const url = await app.getUrl();
