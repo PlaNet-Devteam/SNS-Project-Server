@@ -78,8 +78,7 @@ async function bootstrap() {
   );
 
   app.enableShutdownHooks();
-  app.useWebSocketAdapter(new IoAdapter(app));
-  await app.listen(process.env.SERVER_PORT || 4300);
+  await app.listen(process.env.SERVER_PORT || 4300, '0.0.0.0');
 
   // display server url
   const url = await app.getUrl();
