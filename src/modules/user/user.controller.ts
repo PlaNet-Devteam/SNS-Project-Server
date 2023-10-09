@@ -93,4 +93,9 @@ export class UserController {
   ) {
     return await this.userService.updateUser(id, userUpdateDto);
   }
+
+  @Get('users')
+  findAllUsers() {
+    return this.userService.findAllUsers();
+  }
 }

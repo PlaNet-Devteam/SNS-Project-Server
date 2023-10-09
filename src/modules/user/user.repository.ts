@@ -171,4 +171,7 @@ export class UserRepository {
 
     return user;
   }
+  async findAllUsers() {
+    return await this.userRepository.find(); // 모든 사용자 정보를 가져옵니다.
+  }
 }
