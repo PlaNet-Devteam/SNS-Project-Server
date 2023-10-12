@@ -13,6 +13,7 @@ import helmet from 'helmet';
 import { ENVIRONMENT, dataSource } from './config';
 import * as cookieParser from 'cookie-parser';
 import { ClassTransformOptions } from 'class-transformer';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 
 // const debug = Debug(`app:${basename(__dirname)}:${basename(__filename)}`);
 
