@@ -5,3 +5,4 @@ export * from './user/user.module';
 export * from './feed/feed.module';
 export * from './comment/comment.module';
 export * from './comment-reply/comment-reply.module';
+export * from './chat/chat.module';

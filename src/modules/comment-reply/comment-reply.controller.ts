@@ -101,7 +101,7 @@ export class CommentReplyController {
    * @returns CommentReply
    */
 
-  @Delete('/comment/:commentId([0-9]+)/comment/:replyId([0-9]+)')
+  @Delete('/comment/:commentId([0-9]+)/reply/:replyId([0-9]+)')
   @HttpCode(HttpStatus.OK)
   public async deleteCommentReply(
     @Param('commentId', ParseIntPipe) commentId: number,
