@@ -58,4 +58,8 @@ export class UserService {
     if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
     await this.userRepository.updateUser(id, userUpdateDto);
   }
+
+  public async findAllUsers() {
+    return await this.userRepository.findAllUsers();
+  }
 }

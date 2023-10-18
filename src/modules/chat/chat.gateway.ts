@@ -15,14 +15,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: Socket) {
     console.log('User connected successfully');
+    client.join('room');
   }
 
   handleDisconnect(client: Socket) {
     console.log('User disconnected');
   }
   @SubscribeMessage('message')
-  handleMessage(@MessageBody() message: string): void {
+  handleMessage(@MessageBody() message: any): void {
     console.log(message);
-    this.server.emit('message', message);
+    this.server.to('room').emit('message', message);
   }
 }
