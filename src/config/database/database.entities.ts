@@ -1,3 +1,4 @@
+import { CommentReply } from 'src/modules/comment-reply/comment-reply.entity';
 import { Comment } from 'src/modules/comment/comment.entity';
 import { FeedImage } from 'src/modules/feed-image/feed-image.entity';
 import { FeedLike } from 'src/modules/feed-like/feed-like.entity';
@@ -14,4 +15,5 @@ export const Entities = [
   FeedImage,
   FeedLike,
   Comment,
+  CommentReply,
 ];

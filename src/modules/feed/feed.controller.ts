@@ -23,6 +23,7 @@ import { FeedCreateDto, FeedListDto, FeedUpdateDto } from './dto';
 
 @Controller()
 @ApiTags('FEED')
+@UseGuards(new UserGuard())
 export class FeedController {
   constructor(private readonly feedService: FeedService) {}
 
@@ -71,7 +72,6 @@ export class FeedController {
    * @param feedCreateDto
    * @returns Feed
    */
-  @UseGuards(new UserGuard())
   @Post('/feed')
   @HttpCode(HttpStatus.CREATED)
   public async createFeed(
@@ -81,6 +81,21 @@ export class FeedController {
     return await this.feedService.createFeed(user.id, feedCreateDto);
   }
 
+  /**
+   * 피드 좋아요
+   * @param user
+   * @param id
+   * @returns
+   */
+  @Post('/feed/:id([0-9]+)/like')
+  @HttpCode(HttpStatus.CREATED)
+  public async likeFeed(
+    @UserInfo() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return await this.feedService.likeFeed(user.id, id);
+  }
+
   // PATCH ENDPOINTS
 
   /**
@@ -88,7 +103,6 @@ export class FeedController {
    * @param feedUpdateDto
    * @returns Feed
    */
-  @UseGuards(new UserGuard())
   @Patch('/feed/:id([0-9]+)')
   @HttpCode(HttpStatus.OK)
   public async updateFeed(
@@ -107,7 +121,6 @@ export class FeedController {
    * @param id
    * @returns
    */
-  @UseGuards(new UserGuard())
   @Delete('/feed/:id([0-9]+)')
   @HttpCode(HttpStatus.OK)
   public async deleteFeed(
@@ -117,19 +130,12 @@ export class FeedController {
     return await this.feedService.deleteFeed(user.id, id);
   }
 
-  /** 피드 좋아요 */
-  @UseGuards(new UserGuard())
-  @Post('/feed/:id([0-9]+)/like')
-  @HttpCode(HttpStatus.CREATED)
-  public async likeFeed(
-    @UserInfo() user: User,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
-    return await this.feedService.likeFeed(user.id, id);
-  }
-
-  /** 피드 좋아요 */
-  @UseGuards(new UserGuard())
+  /**
+   * 피드 좋아요 해제
+   * @param user
+   * @param id
+   * @returns
+   */
   @Delete('/feed/:id([0-9]+)/like')
   @HttpCode(HttpStatus.OK)
   public async deleteLikeFeed(

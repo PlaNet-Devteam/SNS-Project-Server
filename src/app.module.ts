@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import {
   AuthModule,
   CommentModule,
+  CommentReplyModule,
   FeedModule,
   UserModule,
   ChatModule,
@@ -26,6 +27,7 @@ import { ENVIRONMENT, CacheClusterModule } from './config';
     UserLoginHistoryModule,
     FeedModule,
     CommentModule,
+    CommentReplyModule,
     ChatModule,
   ],
   controllers: [],
