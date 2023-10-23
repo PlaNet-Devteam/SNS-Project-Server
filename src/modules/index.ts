@@ -6,3 +6,4 @@ export * from './feed/feed.module';
 export * from './comment/comment.module';
 export * from './comment-reply/comment-reply.module';
 export * from './chat/chat.module';
+export * from './mapper-user-follow/mapper-user-follow.module';

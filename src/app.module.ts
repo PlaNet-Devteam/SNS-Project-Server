@@ -6,6 +6,7 @@ import {
   FeedModule,
   UserModule,
   ChatModule,
+  MapperUserFollowModule,
 } from './modules';
 import { UserLoginHistoryModule } from './modules/user-login-history/user-login-history.module';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
@@ -29,6 +30,7 @@ import { ENVIRONMENT, CacheClusterModule } from './config';
     CommentModule,
     CommentReplyModule,
     ChatModule,
+    MapperUserFollowModule,
   ],
   controllers: [],
   providers: [],
