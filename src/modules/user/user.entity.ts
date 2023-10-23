@@ -87,4 +87,8 @@ export class User extends BaseUpdateEntity<User> {
     (userLoginHistory) => userLoginHistory.user,
   )
   userLoginHistory?: UserLoginHistory[];
+
+  followingIds?: number[];
+
+  followerIds?: number[];
 }

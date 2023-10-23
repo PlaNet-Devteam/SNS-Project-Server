@@ -7,6 +7,7 @@ import { dataSource } from '../../config';
 import { UserCreateDto, UserUpdateDto } from './dto';
 import { UserHistory } from '../user-history/user-history.entity';
 import { HashService } from '../auth/hash.service';
+import { MapperUserFollow } from '../mapper-user-follow/mapper-user-follow.entity';
 
 @Injectable()
 export class UserRepository {
@@ -43,6 +44,20 @@ export class UserRepository {
       ])
       .where('user.id = :id', { id: id })
       .getOne();
+
+    // * 팔로잉 유저
+    const followingUsers = await MapperUserFollow.createQueryBuilder('mapper')
+      .where('mapper.userId = :userId', { userId: id })
+      .getMany();
+
+    user.followingIds = followingUsers.map((follow) => follow.followingId);
+
+    // * 팔로워 유저
+    const followerUsers = await MapperUserFollow.createQueryBuilder('mapper')
+      .where('mapper.followingId = :followingId', { followingId: id })
+      .getMany();
+
+    user.followerIds = followerUsers.map((follow) => follow.userId);
 
     return user;
   }
@@ -93,6 +108,20 @@ export class UserRepository {
       ])
       .where('user.username = :username', { username: username })
       .getOne();
+
+    // * 팔로잉 유저
+    const followingUsers = await MapperUserFollow.createQueryBuilder('mapper')
+      .where('mapper.userId = :userId', { userId: user.id })
+      .getMany();
+
+    user.followingIds = followingUsers.map((follow) => follow.followingId);
+
+    // * 팔로워 유저
+    const followerUsers = await MapperUserFollow.createQueryBuilder('mapper')
+      .where('mapper.followingId = :followingId', { followingId: user.id })
+      .getMany();
+
+    user.followerIds = followerUsers.map((follow) => follow.userId);
 
     return user;
   }
