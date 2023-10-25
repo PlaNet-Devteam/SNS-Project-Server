@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DB_CONST_REPOSITORY, dataSource } from 'src/config';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import {
   MapperUserFollowCreateDto,
   MapperUserFollowDeleteDto,
@@ -42,6 +42,13 @@ export class MapperUserFollowRepository {
       .where('user.status = :status', {
         status: USER_STATUS.ACTIVE,
       })
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where('user.username LIKE :query OR user.nickname LIKE :query', {
+            query: `%${mapperUserfollowListDto.query}%`,
+          });
+        }),
+      )
       .andWhere('mapper.userId = :userId', {
         userId: userId,
       })
@@ -83,6 +90,13 @@ export class MapperUserFollowRepository {
       .where('user.status = :status', {
         status: USER_STATUS.ACTIVE,
       })
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where('user.username LIKE :query OR user.nickname LIKE :query', {
+            query: `%${mapperUserfollowListDto.query}%`,
+          });
+        }),
+      )
       .andWhere('mapper.followingId = :followingId', {
         followingId: userId,
       })

@@ -34,7 +34,7 @@ export class CommentReplyRepository {
     const limit = commentReplyListDto?.limit;
     const offset = (page - 1) * limit;
 
-    const commentReplys = this.commentReplyRepository
+    const commentReplies = this.commentReplyRepository
       .createQueryBuilder('commentReply')
       .leftJoinAndSelect('commentReply.user', 'user')
       .select([
@@ -54,7 +54,7 @@ export class CommentReplyRepository {
       .offset(offset)
       .limit(limit);
 
-    const [items, totalCount] = await commentReplys.getManyAndCount();
+    const [items, totalCount] = await commentReplies.getManyAndCount();
     const lasPage = Math.ceil(totalCount / limit);
 
     return {
