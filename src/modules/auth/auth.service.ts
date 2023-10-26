@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -12,11 +13,12 @@ import { UserPayload } from './type';
 import * as cacheConvention from '../_context/cache.convention.json';
 import Redis from 'ioredis';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
-import { AuthLoginDto } from './dto';
+import { AuthLoginDto, ChangePasswordDto } from './dto';
 import { AuthTokenVo } from './vo/auth-token.vo';
 import { UserLoginHistory } from '../user-login-history/user-login-history.entity';
 import { USER_LOGIN } from 'src/common';
 import { UserLoginHistoryRepository } from '../user-login-history/user-login-history.repository';
+import { UserFindOneVo } from '../user/vo';
 
 @Injectable()
 export class AuthService {
@@ -169,5 +171,32 @@ export class AuthService {
     await this.redis.set(cacheKey, encryptedToken);
 
     return token;
+  }
+
+  /**
+   * 비밀번호 변경
+   * @param id
+   * @param changePasswordDto
+   */
+  async changePassword(
+    email: string,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<UserFindOneVo> {
+    const user = await this.userRepository.findUserByEmail(email);
+    if (!user) throw new NotFoundException();
+
+    const validPassword = await this.userRepository.comparePassword(
+      changePasswordDto.password,
+      user.password,
+    );
+    if (!validPassword)
+      throw new BadRequestException('비밀번호가 일치하지 않습니다');
+
+    const newPassword = await this.hashService.hashString(
+      changePasswordDto.newPassword,
+    );
+    await this.userRepository.updatePassword(user.id, newPassword);
+
+    return user;
   }
 }

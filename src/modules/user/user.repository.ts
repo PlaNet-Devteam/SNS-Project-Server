@@ -49,15 +49,15 @@ export class UserRepository {
     const followingUsers = await MapperUserFollow.createQueryBuilder('mapper')
       .where('mapper.userId = :userId', { userId: id })
       .getMany();
-
-    user.followingIds = followingUsers.map((follow) => follow.followingId);
+    if (followingUsers.length > 0)
+      user.followingIds = followingUsers.map((follow) => follow.followingId);
 
     // * 팔로워 유저
     const followerUsers = await MapperUserFollow.createQueryBuilder('mapper')
       .where('mapper.followingId = :followingId', { followingId: id })
       .getMany();
-
-    user.followerIds = followerUsers.map((follow) => follow.userId);
+    if (followerUsers.length > 0)
+      user.followerIds = followerUsers.map((follow) => follow.userId);
 
     return user;
   }
@@ -113,15 +113,15 @@ export class UserRepository {
     const followingUsers = await MapperUserFollow.createQueryBuilder('mapper')
       .where('mapper.userId = :userId', { userId: user.id })
       .getMany();
-
-    user.followingIds = followingUsers.map((follow) => follow.followingId);
+    if (followingUsers.length > 0)
+      user.followingIds = followingUsers.map((follow) => follow.followingId);
 
     // * 팔로워 유저
     const followerUsers = await MapperUserFollow.createQueryBuilder('mapper')
       .where('mapper.followingId = :followingId', { followingId: user.id })
       .getMany();
-
-    user.followerIds = followerUsers.map((follow) => follow.userId);
+    if (followerUsers.length > 0)
+      user.followerIds = followerUsers.map((follow) => follow.userId);
 
     return user;
   }
@@ -200,6 +200,36 @@ export class UserRepository {
 
     return user;
   }
+
+  /**
+   * 사용자 비밀번호 수정
+   * @param id
+   * @param newPassword
+   * @returns
+   */
+  public async updatePassword(id: number, newPassword: string): Promise<User> {
+    const user = await dataSource.transaction(async (transaction) => {
+      let updatedUser = await this.userRepository.findOne({
+        where: { id: id },
+      });
+      updatedUser.password = newPassword;
+      updatedUser = await this.userRepository.save(updatedUser);
+
+      const userHistory = new UserHistory().set(updatedUser);
+      userHistory.userId = updatedUser.id;
+      userHistory.createdAt = new Date();
+      await transaction.save(userHistory);
+
+      return updatedUser;
+    });
+
+    return user;
+  }
+
+  /**
+   *
+   * @returns
+   */
   async findAllUsers() {
     return await this.userRepository.find(); // 모든 사용자 정보를 가져옵니다.
   }

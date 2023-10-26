@@ -3,6 +3,7 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   Req,
   Res,
@@ -10,12 +11,13 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { AuthLoginDto } from './dto';
+import { AuthLoginDto, ChangePasswordDto } from './dto';
 import { Request, Response } from 'express';
 import { BaseResponseVo, RefreshGuard, UserGuard } from 'src/core';
 import { AuthTokenVo } from './vo/auth-token.vo';
 import { User } from '../user/user.entity';
 import { UserInfo } from '../../common';
+import { UserFindOneVo } from '../user/vo';
 
 @Controller('auth')
 @ApiTags('AUTH')
@@ -68,6 +70,23 @@ export class AuthController {
   ): Promise<BaseResponseVo<AuthTokenVo>> {
     return new BaseResponseVo(
       await this.authService.refreshUserToken(request.cookies['refresh-token']),
+    );
+  }
+
+  /**
+   * 비밀번호 변경
+   * @param changePasswordDto
+   * @returns
+   */
+  @UseGuards(new RefreshGuard())
+  @Patch('change-password')
+  @HttpCode(HttpStatus.OK)
+  public async changePassword(
+    @UserInfo() user: User,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<BaseResponseVo<UserFindOneVo>> {
+    return new BaseResponseVo(
+      await this.authService.changePassword(user.email, changePasswordDto),
     );
   }
 }
