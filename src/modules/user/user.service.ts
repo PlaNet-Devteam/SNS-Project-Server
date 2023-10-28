@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { UserFindOneVo } from './vo';
-import { UserCreateDto, UserUpdateDto } from './dto';
+import { UserCreateDto, UserUpdateDto, UserUpdateStatusDto } from './dto';
 
 @Injectable()
 export class UserService {
@@ -57,6 +57,22 @@ export class UserService {
     const user = await this.userRepository.findOneUser(id);
     if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
     await this.userRepository.updateUser(id, userUpdateDto);
+  }
+
+  /**
+   *  유저 상태 변경
+   * @param id
+   * @param userUpdateStatusDto
+   * @returns
+   */
+  public async updateUserStatus(
+    id: number,
+    userUpdateStatusDto: UserUpdateStatusDto,
+  ) {
+    const user = await this.userRepository.findOneUser(id);
+    if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
+
+    return this.userRepository.updateUserStatus(id, userUpdateStatusDto);
   }
 
   public async findAllUsers() {

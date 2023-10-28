@@ -3,15 +3,16 @@ import { User } from '../user.entity';
 import { MapperUserFollow } from 'src/modules/mapper-user-follow/mapper-user-follow.entity';
 
 export class UserFindOneVo implements Partial<User> {
+  id: number;
   username: string;
   email: string;
   status: USER_STATUS;
+  password?: string;
   followerCount?: number;
   followingCount?: number;
   feedCount?: number;
   profileImage?: string;
   bio?: string;
-  id: number;
   gender?: GENDER;
   followers?: number[];
   followings?: number[];

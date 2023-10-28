@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -13,7 +14,7 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { UserFindOneVo } from './vo';
-import { UserCreateDto, UserUpdateDto } from './dto';
+import { UserCreateDto, UserUpdateDto, UserUpdateStatusDto } from './dto';
 import { BaseResponseVo, UserGuard } from 'src/core';
 import { UserInfo } from 'src/common';
 import { User } from './user.entity';
@@ -58,9 +59,9 @@ export class UserController {
    * @param user
    * @returns UserFindOneVo
    */
-  @UseGuards(new UserGuard())
   @Get('find-me')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(new UserGuard())
   public async findMe(
     @UserInfo() user: User,
   ): Promise<BaseResponseVo<UserFindOneVo>> {
@@ -92,6 +93,19 @@ export class UserController {
     @Body() userUpdateDto: UserUpdateDto,
   ) {
     return await this.userService.updateUser(id, userUpdateDto);
+  }
+
+  @Patch('status')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(new UserGuard())
+  public async updateUserStatus(
+    @UserInfo() user: User,
+    @Body() userUpdateStatusDto: UserUpdateStatusDto,
+  ) {
+    return await this.userService.updateUserStatus(
+      user.id,
+      userUpdateStatusDto,
+    );
   }
 
   @Get('users')
