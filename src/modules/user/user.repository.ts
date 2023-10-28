@@ -46,21 +46,20 @@ export class UserRepository {
       .where('user.id = :id', { id: id })
       .getOne();
 
-    if (user) {
-      // * 팔로잉 유저
-      const followingUsers = await MapperUserFollow.createQueryBuilder('mapper')
-        .where('mapper.userId = :userId', { userId: id })
-        .getMany();
-      if (followingUsers.length > 0)
-        user.followingIds = followingUsers.map((follow) => follow.followingId);
+    // * 팔로잉 유저
+    const followingUsers = await MapperUserFollow.createQueryBuilder('mapper')
+      .where('mapper.userId = :userId', { userId: id })
+      .getMany();
+    if (followingUsers.length > 0)
+      user.followingIds = followingUsers.map((follow) => follow.followingId);
 
-      // * 팔로워 유저
-      const followerUsers = await MapperUserFollow.createQueryBuilder('mapper')
-        .where('mapper.followingId = :followingId', { followingId: id })
-        .getMany();
-      if (followerUsers.length > 0)
-        user.followerIds = followerUsers.map((follow) => follow.userId);
-    }
+    // * 팔로워 유저
+    const followerUsers = await MapperUserFollow.createQueryBuilder('mapper')
+      .where('mapper.followingId = :followingId', { followingId: id })
+      .getMany();
+    if (followerUsers.length > 0)
+      user.followerIds = followerUsers.map((follow) => follow.userId);
+
     return user;
   }
 
@@ -111,21 +110,30 @@ export class UserRepository {
       .where('user.username = :username', { username: username })
       .getOne();
 
+    // * 팔로잉 유저
     if (user) {
-      // * 팔로잉 유저
       const followingUsers = await MapperUserFollow.createQueryBuilder('mapper')
         .where('mapper.userId = :userId', { userId: user.id })
         .getMany();
-      if (followingUsers.length > 0)
+      if (followingUsers && followingUsers.length > 0) {
         user.followingIds = followingUsers.map((follow) => follow.followingId);
+      } else {
+        user.followingIds = [];
+      }
+    }
 
-      // * 팔로워 유저
+    // * 팔로워 유저
+    if (user) {
       const followerUsers = await MapperUserFollow.createQueryBuilder('mapper')
         .where('mapper.followingId = :followingId', { followingId: user.id })
         .getMany();
-      if (followerUsers.length > 0)
+      if (followerUsers && followerUsers.length > 0) {
         user.followerIds = followerUsers.map((follow) => follow.userId);
+      } else {
+        user.followerIds = [];
+      }
     }
+
     return user;
   }
 
