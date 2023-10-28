@@ -222,6 +222,7 @@ export class UserRepository {
       });
 
       updatedUser.status = userUpdateStatusDto.status;
+      updatedUser.inactiveAt = new Date();
       updatedUser = await transaction.save(updatedUser);
 
       // * 유저 히스토리 업데이트
