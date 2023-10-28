@@ -39,10 +39,7 @@ export class MapperUserFollowRepository {
     const user = this.mapperUserFollowRepository
       .createQueryBuilder('mapper')
       .leftJoinAndSelect('mapper.following', 'user')
-      .where('user.status = :status', {
-        status: USER_STATUS.ACTIVE,
-      })
-      .andWhere(
+      .where(
         new Brackets((qb) => {
           qb.where('user.username LIKE :query OR user.nickname LIKE :query', {
             query: `%${mapperUserfollowListDto.query}%`,
@@ -87,10 +84,7 @@ export class MapperUserFollowRepository {
     const user = this.mapperUserFollowRepository
       .createQueryBuilder('mapper')
       .leftJoinAndSelect('mapper.follower', 'user')
-      .where('user.status = :status', {
-        status: USER_STATUS.ACTIVE,
-      })
-      .andWhere(
+      .where(
         new Brackets((qb) => {
           qb.where('user.username LIKE :query OR user.nickname LIKE :query', {
             query: `%${mapperUserfollowListDto.query}%`,

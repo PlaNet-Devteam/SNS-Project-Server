@@ -3,7 +3,7 @@ import { DB_CONST_REPOSITORY, dataSource } from 'src/config';
 import { Repository } from 'typeorm';
 import { Feed } from './feed.entity';
 import { FeedFindOneVo } from './vo';
-import { FEED_STATUS, YN } from 'src/common';
+import { FEED_STATUS, USER_STATUS, YN } from 'src/common';
 import { FeedCreateDto, FeedListDto, FeedUpdateDto } from './dto';
 import { FeedImage } from '../feed-image/feed-image.entity';
 import { BaseResponseVo, PaginateResponseVo } from 'src/core';
@@ -50,7 +50,8 @@ export class FeedRepository {
         'user.nickname',
         'user.profileImage',
       ])
-      .where('feed.displayYn = :displayYn', { displayYn: YN.Y })
+      .where('user.status = :status', { status: USER_STATUS.ACTIVE })
+      .andWhere('feed.displayYn = :displayYn', { displayYn: YN.Y })
       .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE })
       .orderBy('feed.createdAt', 'DESC')
       .offset(offset)
