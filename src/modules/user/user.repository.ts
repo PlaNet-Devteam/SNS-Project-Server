@@ -4,10 +4,11 @@ import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { UserFindOneVo } from './vo';
 import { dataSource } from '../../config';
-import { UserCreateDto, UserUpdateDto } from './dto';
+import { UserCreateDto, UserUpdateDto, UserUpdateStatusDto } from './dto';
 import { UserHistory } from '../user-history/user-history.entity';
 import { HashService } from '../auth/hash.service';
 import { MapperUserFollow } from '../mapper-user-follow/mapper-user-follow.entity';
+import { USER_STATUS, YN } from 'src/common';
 
 @Injectable()
 export class UserRepository {
@@ -45,20 +46,21 @@ export class UserRepository {
       .where('user.id = :id', { id: id })
       .getOne();
 
-    // * 팔로잉 유저
-    const followingUsers = await MapperUserFollow.createQueryBuilder('mapper')
-      .where('mapper.userId = :userId', { userId: id })
-      .getMany();
-    if (followingUsers.length > 0)
-      user.followingIds = followingUsers.map((follow) => follow.followingId);
+    if (user) {
+      // * 팔로잉 유저
+      const followingUsers = await MapperUserFollow.createQueryBuilder('mapper')
+        .where('mapper.userId = :userId', { userId: id })
+        .getMany();
+      if (followingUsers.length > 0)
+        user.followingIds = followingUsers.map((follow) => follow.followingId);
 
-    // * 팔로워 유저
-    const followerUsers = await MapperUserFollow.createQueryBuilder('mapper')
-      .where('mapper.followingId = :followingId', { followingId: id })
-      .getMany();
-    if (followerUsers.length > 0)
-      user.followerIds = followerUsers.map((follow) => follow.userId);
-
+      // * 팔로워 유저
+      const followerUsers = await MapperUserFollow.createQueryBuilder('mapper')
+        .where('mapper.followingId = :followingId', { followingId: id })
+        .getMany();
+      if (followerUsers.length > 0)
+        user.followerIds = followerUsers.map((follow) => follow.userId);
+    }
     return user;
   }
 
@@ -85,7 +87,7 @@ export class UserRepository {
   }
 
   /**
-   * 사용자명으로 존재하는지 확인
+   * 유저명으로 존재하는지 확인
    * @param username
    * @returns User
    */
@@ -109,20 +111,21 @@ export class UserRepository {
       .where('user.username = :username', { username: username })
       .getOne();
 
-    // * 팔로잉 유저
-    const followingUsers = await MapperUserFollow.createQueryBuilder('mapper')
-      .where('mapper.userId = :userId', { userId: user.id })
-      .getMany();
-    if (followingUsers.length > 0)
-      user.followingIds = followingUsers.map((follow) => follow.followingId);
+    if (user) {
+      // * 팔로잉 유저
+      const followingUsers = await MapperUserFollow.createQueryBuilder('mapper')
+        .where('mapper.userId = :userId', { userId: user.id })
+        .getMany();
+      if (followingUsers.length > 0)
+        user.followingIds = followingUsers.map((follow) => follow.followingId);
 
-    // * 팔로워 유저
-    const followerUsers = await MapperUserFollow.createQueryBuilder('mapper')
-      .where('mapper.followingId = :followingId', { followingId: user.id })
-      .getMany();
-    if (followerUsers.length > 0)
-      user.followerIds = followerUsers.map((follow) => follow.userId);
-
+      // * 팔로워 유저
+      const followerUsers = await MapperUserFollow.createQueryBuilder('mapper')
+        .where('mapper.followingId = :followingId', { followingId: user.id })
+        .getMany();
+      if (followerUsers.length > 0)
+        user.followerIds = followerUsers.map((follow) => follow.userId);
+    }
     return user;
   }
 
@@ -144,21 +147,21 @@ export class UserRepository {
   // INSERTS
 
   /**
-   * 사용자 생성
+   * 유저 생성
    * @param userCreateDto
    * @returns User
    */
   public async createUser(userCreateDto: UserCreateDto): Promise<User> {
     const user = await dataSource.transaction(async (transaction) => {
-      // 비번 암호화
+      // * 비밀번호 암호화
       userCreateDto.password = await this.hashService.hashString(
         userCreateDto.password,
       );
       let newUser = new User(userCreateDto);
-      // TODO: profile image  생성
       newUser = await transaction.save(newUser);
-      const userHistory = new UserHistory().set(newUser);
-      userHistory.userId = newUser.id;
+
+      // * 유저 히스토리 업데이트
+      const userHistory = this.__user_update_history(newUser.id, newUser);
       await transaction.save(userHistory);
 
       return newUser;
@@ -170,7 +173,7 @@ export class UserRepository {
   // UPDATE
 
   /**
-   * 사용자 정보 수정
+   * 유저 정보 수정
    * @param id
    * @param userUpdateDto
    * @returns
@@ -190,9 +193,11 @@ export class UserRepository {
       updatedUser.profileImage = userUpdateDto.profileImage;
       updatedUser = await transaction.save(updatedUser);
 
-      const userHistory = new UserHistory().set(updatedUser);
-      userHistory.userId = updatedUser.id;
-      userHistory.createdAt = new Date();
+      // * 유저 히스토리 업데이트
+      const userHistory = this.__user_update_history(
+        updatedUser.id,
+        updatedUser,
+      );
       await transaction.save(userHistory);
 
       return updatedUser;
@@ -202,7 +207,38 @@ export class UserRepository {
   }
 
   /**
-   * 사용자 비밀번호 수정
+   * 유저 상태 수정
+   * @param id
+   * @param userUpdateStatusDto
+   * @returns
+   */
+  public async updateUserStatus(
+    id: number,
+    userUpdateStatusDto: UserUpdateStatusDto,
+  ): Promise<User> {
+    const user = await dataSource.transaction(async (transaction) => {
+      let updatedUser = await this.userRepository.findOne({
+        where: { id: id },
+      });
+
+      updatedUser.status = userUpdateStatusDto.status;
+      updatedUser = await transaction.save(updatedUser);
+
+      // * 유저 히스토리 업데이트
+      const userHistory = this.__user_update_history(
+        updatedUser.id,
+        updatedUser,
+      );
+      await transaction.save(userHistory);
+
+      return updatedUser;
+    });
+
+    return user;
+  }
+
+  /**
+   * 유저 비밀번호 수정
    * @param id
    * @param newPassword
    * @returns
@@ -215,11 +251,6 @@ export class UserRepository {
       updatedUser.password = newPassword;
       updatedUser = await this.userRepository.save(updatedUser);
 
-      const userHistory = new UserHistory().set(updatedUser);
-      userHistory.userId = updatedUser.id;
-      userHistory.createdAt = new Date();
-      await transaction.save(userHistory);
-
       return updatedUser;
     });
 
@@ -231,6 +262,16 @@ export class UserRepository {
    * @returns
    */
   async findAllUsers() {
-    return await this.userRepository.find(); // 모든 사용자 정보를 가져옵니다.
+    return await this.userRepository.find(); // 모든 유저 정보를 가져옵니다.
+  }
+
+  /**
+   * 유저 히스토리 업데이트
+   */
+  private __user_update_history(userId: number, user: User) {
+    const userHistory = new UserHistory().set(user);
+    userHistory.userId = userId;
+    userHistory.createdAt = new Date();
+    return userHistory;
   }
 }
