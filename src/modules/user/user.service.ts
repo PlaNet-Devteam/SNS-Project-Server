@@ -6,6 +6,7 @@ import {
 import { UserRepository } from './user.repository';
 import { UserFindOneVo } from './vo';
 import { UserCreateDto, UserUpdateDto, UserUpdateStatusDto } from './dto';
+import { UserDeleteDto } from './dto/user-delete.dto';
 
 @Injectable()
 export class UserService {
@@ -73,6 +74,31 @@ export class UserService {
     if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
 
     return this.userRepository.updateUserStatus(id, userUpdateStatusDto);
+  }
+
+  /**
+   *  계정 활성화
+   * @param id
+   * @returns
+   */
+  public async activateUser(id: number) {
+    const user = await this.userRepository.findOneUser(id);
+    if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
+
+    return this.userRepository.activateUser(id);
+  }
+
+  /**
+   *  계정 삭제
+   * @param id
+   * @param userDeleteDto
+   * @returns
+   */
+  public async deleteUser(id: number, userDeleteDto: UserDeleteDto) {
+    const user = await this.userRepository.findOneUser(id);
+    if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
+
+    return this.userRepository.deleteUser(id, userDeleteDto);
   }
 
   public async findAllUsers() {

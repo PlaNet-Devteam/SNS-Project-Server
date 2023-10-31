@@ -1,4 +1,4 @@
-import { GENDER, USER_STATUS } from 'src/common';
+import { GENDER, USER_STATUS, YN } from 'src/common';
 import { User } from '../user.entity';
 import { MapperUserFollow } from 'src/modules/mapper-user-follow/mapper-user-follow.entity';
 
@@ -7,6 +7,7 @@ export class UserFindOneVo implements Partial<User> {
   username: string;
   email: string;
   status: USER_STATUS;
+  delYn?: YN;
   password?: string;
   followerCount?: number;
   followingCount?: number;

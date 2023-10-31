@@ -18,6 +18,7 @@ import { UserCreateDto, UserUpdateDto, UserUpdateStatusDto } from './dto';
 import { BaseResponseVo, UserGuard } from 'src/core';
 import { UserInfo } from 'src/common';
 import { User } from './user.entity';
+import { UserDeleteDto } from './dto/user-delete.dto';
 
 @Controller('user')
 @ApiTags('USER')
@@ -95,6 +96,12 @@ export class UserController {
     return await this.userService.updateUser(id, userUpdateDto);
   }
 
+  /**
+   *  사용자 상태 수정
+   * @param user
+   * @param userUpdateStatusDto
+   * @returns
+   */
   @Patch('status')
   @HttpCode(HttpStatus.OK)
   @UseGuards(new UserGuard())
@@ -106,6 +113,35 @@ export class UserController {
       user.id,
       userUpdateStatusDto,
     );
+  }
+
+  /**
+   *  계정 활성화
+   * @param user
+   * @param userUpdateStatusDto
+   * @returns
+   */
+  @Patch('activate-account')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(new UserGuard())
+  public async activateUser(@UserInfo() user: User) {
+    return await this.userService.activateUser(user.id);
+  }
+
+  /**
+   * 계정 삭제
+   * @param user
+   * @param userDeleteDto
+   * @returns
+   */
+  @Delete()
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(new UserGuard())
+  public async deleteUser(
+    @UserInfo() user: User,
+    @Body() userDeleteDto: UserDeleteDto,
+  ) {
+    return await this.userService.deleteUser(user.id, userDeleteDto);
   }
 
   @Get('users')

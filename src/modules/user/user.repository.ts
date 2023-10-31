@@ -9,6 +9,7 @@ import { UserHistory } from '../user-history/user-history.entity';
 import { HashService } from '../auth/hash.service';
 import { MapperUserFollow } from '../mapper-user-follow/mapper-user-follow.entity';
 import { USER_STATUS, YN } from 'src/common';
+import { UserDeleteDto } from './dto/user-delete.dto';
 
 @Injectable()
 export class UserRepository {
@@ -25,7 +26,7 @@ export class UserRepository {
    * @param id
    * @returns UserFindOneVo
    */
-  public async findOneUser(id: number): Promise<UserFindOneVo> {
+  public async findOneUser(id: number): Promise<User> {
     // transaction 예시
     const user = await this.userRepository
       .createQueryBuilder('user')
@@ -34,6 +35,7 @@ export class UserRepository {
         'user.username',
         'user.password', // 비번 확인을 위해서 select -> JSON 변환 시 리스에서 빠짐
         'user.email',
+        'user.delYn',
         'user.nickname',
         'user.followingCount',
         'user.feedCount',
@@ -71,14 +73,6 @@ export class UserRepository {
   public async findUserByEmail(email: string): Promise<User> {
     const user = await this.userRepository
       .createQueryBuilder('user')
-      .select([
-        'user.id',
-        'user.email',
-        'user.password',
-        'user.status',
-        'user.nickname',
-        'user.username',
-      ])
       .where('user.email = :email', { email: email })
       .getOne();
 
@@ -93,21 +87,8 @@ export class UserRepository {
   public async findUserByUsername(username: string): Promise<User> {
     const user = await this.userRepository
       .createQueryBuilder('user')
-      .select([
-        'user.id',
-        'user.username',
-        'user.password',
-        'user.email',
-        'user.nickname',
-        'user.followingCount',
-        'user.feedCount',
-        'user.followerCount',
-        'user.bio',
-        'user.profileImage',
-        'user.status',
-        'user.gender',
-      ])
       .where('user.username = :username', { username: username })
+      .andWhere('user.delYn = :delYn', { delYn: YN.N })
       .getOne();
 
     // * 팔로잉 유저
@@ -230,7 +211,10 @@ export class UserRepository {
       });
 
       updatedUser.status = userUpdateStatusDto.status;
-      updatedUser.inactiveAt = new Date();
+      if (userUpdateStatusDto.status === USER_STATUS.INACTIVE) {
+        updatedUser.inactiveAt = new Date();
+      }
+      updatedUser.delYn = userUpdateStatusDto.delYn;
       updatedUser = await transaction.save(updatedUser);
 
       // * 유저 히스토리 업데이트
@@ -263,6 +247,88 @@ export class UserRepository {
       return updatedUser;
     });
 
+    return user;
+  }
+
+  /**
+   * 계정 삭제 취소 (delYn => N )
+   * @param id
+   * @param userUpdateStatusDto
+   * @returns
+   */
+  public async activateUser(id: number): Promise<User> {
+    const user = await dataSource.transaction(async (transaction) => {
+      let updatedUser = await this.userRepository.findOne({
+        where: { id: id },
+      });
+
+      updatedUser.status = USER_STATUS.ACTIVE;
+      updatedUser.inactiveAt = null;
+      updatedUser.delYn = YN.N;
+      updatedUser = await transaction.save(updatedUser);
+
+      // TODO : 나를 팔로워한 유저의 FOLLOWER COUNT 증가
+
+      // * 유저 히스토리 업데이트
+      const userHistory = this.__user_update_history(
+        updatedUser.id,
+        updatedUser,
+      );
+
+      await transaction.save(userHistory);
+
+      return updatedUser;
+    });
+
+    return user;
+  }
+
+  /**
+   * 계정 삭제 ( delYn => Y )
+   * @param id
+   * @param userDeleteDto
+   * @returns
+   */
+  public async deleteUser(
+    id: number,
+    userDeleteDto: UserDeleteDto,
+  ): Promise<User> {
+    const user = await dataSource.transaction(async (transaction) => {
+      let updatedUser = await this.userRepository.findOne({
+        where: { id: id, delYn: YN.N },
+      });
+
+      // * 유저 상태 비활성화 & 삭제 여부 Y
+      updatedUser.status = USER_STATUS.INACTIVE;
+      updatedUser.delYn = YN.Y;
+      updatedUser = await transaction.save(updatedUser);
+
+      // TODO : 나를 팔로워한 유저의 FOLLOWER COUNT 감소
+
+      // * 유저 히스토리 업데이트
+      const userHistory = this.__user_update_history(
+        updatedUser.id,
+        updatedUser,
+      );
+      await transaction.save(userHistory);
+
+      return updatedUser;
+    });
+
+    return user;
+  }
+
+  /**
+   * 최근 로그인 날짜
+   * @param id
+   * @returns
+   */
+  async updateLoginDate(id: number) {
+    const user = await this.userRepository.findOne({
+      where: { id: id },
+    });
+    user.lastLoginAt = new Date();
+    this.userRepository.save(user);
     return user;
   }
 

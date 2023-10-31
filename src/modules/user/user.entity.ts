@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsNotEmpty } from 'class-validator';
-import { GENDER, USER_STATUS } from 'src/common';
+import { GENDER, USER_STATUS, YN } from 'src/common';
 import { BaseUpdateEntity } from 'src/core';
 import { Column, Entity, OneToMany } from 'typeorm';
 import { UserHistory } from '../user-history/user-history.entity';
@@ -78,6 +78,13 @@ export class User extends BaseUpdateEntity<User> {
     name: 'inactive_at',
   })
   inactiveAt?: Date;
+
+  @Column({
+    name: 'del_yn',
+    default: YN.N,
+  })
+  @IsEnum(YN)
+  delYn?: YN;
 
   @OneToMany((type) => UserHistory, (userHistory) => userHistory.user)
   userHistory?: UserHistory[];
