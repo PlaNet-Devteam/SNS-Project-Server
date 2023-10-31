@@ -23,7 +23,6 @@ import { FeedCreateDto, FeedListDto, FeedUpdateDto } from './dto';
 
 @Controller()
 @ApiTags('FEED')
-@UseGuards(new UserGuard())
 export class FeedController {
   constructor(private readonly feedService: FeedService) {}
 
@@ -74,6 +73,7 @@ export class FeedController {
    */
   @Post('/feed')
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(new UserGuard())
   public async createFeed(
     @UserInfo() user: User,
     @Body() feedCreateDto: FeedCreateDto,
@@ -89,6 +89,7 @@ export class FeedController {
    */
   @Post('/feed/:id([0-9]+)/like')
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(new UserGuard())
   public async likeFeed(
     @UserInfo() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -105,6 +106,7 @@ export class FeedController {
    */
   @Patch('/feed/:id([0-9]+)')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(new UserGuard())
   public async updateFeed(
     @UserInfo() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -123,6 +125,7 @@ export class FeedController {
    */
   @Delete('/feed/:id([0-9]+)')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(new UserGuard())
   public async deleteFeed(
     @UserInfo() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -138,6 +141,7 @@ export class FeedController {
    */
   @Delete('/feed/:id([0-9]+)/like')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(new UserGuard())
   public async deleteLikeFeed(
     @UserInfo() user: User,
     @Param('id', ParseIntPipe) id: number,

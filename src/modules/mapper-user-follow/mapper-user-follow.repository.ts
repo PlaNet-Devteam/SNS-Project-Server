@@ -9,7 +9,7 @@ import {
 import { MapperUserFollow } from './mapper-user-follow.entity';
 import { User } from '../user/user.entity';
 import { PaginateResponseVo } from 'src/core';
-import { USER_STATUS } from 'src/common';
+import { YN } from 'src/common';
 import { FollowFindOneVo } from './vo';
 
 @Injectable()
@@ -39,10 +39,7 @@ export class MapperUserFollowRepository {
     const user = this.mapperUserFollowRepository
       .createQueryBuilder('mapper')
       .leftJoinAndSelect('mapper.following', 'user')
-      .where('user.status = :status', {
-        status: USER_STATUS.ACTIVE,
-      })
-      .andWhere(
+      .where(
         new Brackets((qb) => {
           qb.where('user.username LIKE :query OR user.nickname LIKE :query', {
             query: `%${mapperUserfollowListDto.query}%`,
@@ -52,6 +49,7 @@ export class MapperUserFollowRepository {
       .andWhere('mapper.userId = :userId', {
         userId: userId,
       })
+      .andWhere('user.delYn = :delYn', { delYn: YN.N })
       .orderBy('mapper.createdAt', mapperUserfollowListDto.orderBy)
       .offset(offset)
       .limit(limit);
@@ -87,10 +85,7 @@ export class MapperUserFollowRepository {
     const user = this.mapperUserFollowRepository
       .createQueryBuilder('mapper')
       .leftJoinAndSelect('mapper.follower', 'user')
-      .where('user.status = :status', {
-        status: USER_STATUS.ACTIVE,
-      })
-      .andWhere(
+      .where(
         new Brackets((qb) => {
           qb.where('user.username LIKE :query OR user.nickname LIKE :query', {
             query: `%${mapperUserfollowListDto.query}%`,
@@ -100,6 +95,7 @@ export class MapperUserFollowRepository {
       .andWhere('mapper.followingId = :followingId', {
         followingId: userId,
       })
+      .andWhere('user.delYn = :delYn', { delYn: YN.N })
       .orderBy('mapper.createdAt', mapperUserfollowListDto.orderBy)
       .offset(offset)
       .limit(limit);

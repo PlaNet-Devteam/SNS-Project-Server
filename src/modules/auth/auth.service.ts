@@ -16,7 +16,7 @@ import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { AuthLoginDto, ChangePasswordDto } from './dto';
 import { AuthTokenVo } from './vo/auth-token.vo';
 import { UserLoginHistory } from '../user-login-history/user-login-history.entity';
-import { USER_LOGIN } from 'src/common';
+import { USER_LOGIN, YN } from 'src/common';
 import { UserLoginHistoryRepository } from '../user-login-history/user-login-history.repository';
 import { UserFindOneVo } from '../user/vo';
 
@@ -49,14 +49,19 @@ export class AuthService {
       authLoginDto.rememberMe,
     );
 
-    // update login history
-    // TODO: device id
-    const newLoginHistory = new UserLoginHistory({
-      userId: user.id,
-      actionType: USER_LOGIN.LOGIN,
-    });
+    if (user.delYn !== YN.Y) {
+      // * 최근 로그인 날짜 업데이트
+      await this.userRepository.updateLoginDate(user.id);
 
-    await this.userLoginHistoryRepository.createLoginHistory(newLoginHistory);
+      // * 유저 로그인 히스토리 생성
+      // TODO: device id
+      const newLoginHistory = new UserLoginHistory({
+        userId: user.id,
+        actionType: USER_LOGIN.LOGIN,
+      });
+
+      await this.userLoginHistoryRepository.createLoginHistory(newLoginHistory);
+    }
 
     const data = new AuthTokenVo({
       accessToken: accessToken,
