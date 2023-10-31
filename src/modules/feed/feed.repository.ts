@@ -22,10 +22,11 @@ export class FeedRepository {
   // SELECTS
 
   /**
-   * 전체 피드 목록
+   * 전체 피드 목록 (내가 작성한 피드 및 내가 팔로잉한 유저의 피드)
    * @returns
    */
   public async findAll(
+    user: User,
     feedListDto?: FeedListDto,
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
     const page = feedListDto?.page;
@@ -50,7 +51,10 @@ export class FeedRepository {
         'user.nickname',
         'user.profileImage',
       ])
-      .where('user.status = :status', { status: USER_STATUS.ACTIVE })
+      .where('feed.userId IN (:...userId)', {
+        userId: [user.followingIds, user.id],
+      })
+      .andWhere('user.delYn = :delYn', { delYn: YN.N })
       .andWhere('feed.displayYn = :displayYn', { displayYn: YN.Y })
       .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE })
       .orderBy('feed.createdAt', 'DESC')
