@@ -214,7 +214,6 @@ export class UserRepository {
       if (userUpdateStatusDto.status === USER_STATUS.INACTIVE) {
         updatedUser.inactiveAt = new Date();
       }
-      updatedUser.delYn = userUpdateStatusDto.delYn;
       updatedUser = await transaction.save(updatedUser);
 
       // * 유저 히스토리 업데이트

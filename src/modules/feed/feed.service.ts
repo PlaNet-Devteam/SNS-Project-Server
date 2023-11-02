@@ -10,6 +10,7 @@ import { UserRepository } from '../user/user.repository';
 import { FeedCreateDto, FeedListDto, FeedUpdateDto } from './dto';
 import { Feed } from './feed.entity';
 import { PaginateResponseVo } from 'src/core';
+import { User } from '../user/user.entity';
 
 @Injectable()
 export class FeedService {
@@ -21,9 +22,10 @@ export class FeedService {
   // GET SERVICES
 
   public async findAll(
+    user: User,
     feedListDto?: FeedListDto,
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
-    const feeds = await this.feedRepository.findAll(feedListDto);
+    const feeds = await this.feedRepository.findAll(user, feedListDto);
     if (!feeds) throw new NotFoundException();
     return feeds;
   }

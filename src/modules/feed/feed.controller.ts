@@ -30,12 +30,13 @@ export class FeedController {
 
   @Get('/feed')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(new UserGuard())
   public async findAll(
+    @UserInfo() user: User,
     @Query() feedListDto: FeedListDto,
   ): Promise<BaseResponseVo<PaginateResponseVo<FeedFindOneVo>>> {
-    console.log('feedListDto', feedListDto);
     return new BaseResponseVo<PaginateResponseVo<FeedFindOneVo>>(
-      await this.feedService.findAll(feedListDto),
+      await this.feedService.findAll(user, feedListDto),
     );
   }
 
