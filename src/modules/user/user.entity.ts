@@ -95,7 +95,11 @@ export class User extends BaseUpdateEntity<User> {
   )
   userLoginHistory?: UserLoginHistory[];
 
+  // no database
+
   followingIds?: number[];
 
   followerIds?: number[];
+
+  isBlockedByViewer?: boolean;
 }

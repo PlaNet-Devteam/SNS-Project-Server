@@ -17,5 +17,9 @@ export class BasePaginationDto<T> extends BaseDto<T> {
   @IsOptional()
   @IsEnum(ORDER_BY_VALUE, { each: true })
   @Expose()
-  orderBy?: ORDER_BY_VALUE;
+  orderBy?: ORDER_BY_VALUE = ORDER_BY_VALUE.DESC;
+
+  @IsOptional()
+  @Expose()
+  viewerId?: number;
 }

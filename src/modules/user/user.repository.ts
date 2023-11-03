@@ -10,6 +10,7 @@ import { HashService } from '../auth/hash.service';
 import { MapperUserFollow } from '../mapper-user-follow/mapper-user-follow.entity';
 import { USER_STATUS, YN } from 'src/common';
 import { UserDeleteDto } from './dto/user-delete.dto';
+import { UserBlock } from '../user-block/user-block.entity';
 
 @Injectable()
 export class UserRepository {
@@ -84,7 +85,10 @@ export class UserRepository {
    * @param username
    * @returns User
    */
-  public async findUserByUsername(username: string): Promise<User> {
+  public async findUserByUsername(
+    username: string,
+    viewerId?: number,
+  ): Promise<User> {
     const user = await this.userRepository
       .createQueryBuilder('user')
       .where('user.username = :username', { username: username })
@@ -113,6 +117,17 @@ export class UserRepository {
       } else {
         user.followerIds = [];
       }
+    }
+    // * 차단 여부 by Viewer (로그인 한 유저)
+    if (user && viewerId) {
+      const isBlocked = await UserBlock.createQueryBuilder('userBlock')
+        .where('userBlock.blockedUserId = :blockedUserId', {
+          blockedUserId: user.id,
+        })
+        .andWhere('userBlock.userId = :userId', { userId: viewerId })
+        .getExists();
+
+      user.isBlockedByViewer = isBlocked;
     }
 
     return user;

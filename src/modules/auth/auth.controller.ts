@@ -62,7 +62,6 @@ export class AuthController {
    * @param request
    * @returns AuthTokenVo
    */
-  @UseGuards(new RefreshGuard())
   @Post('refresh-token')
   @HttpCode(HttpStatus.OK)
   public async refreshToken(
