@@ -43,6 +43,20 @@ export class UserBlockRepository {
     };
   }
 
+  public async findOne(
+    userId: number,
+    blockedUserId: number,
+  ): Promise<UserBlock> {
+    const user = await this.userBlockRepository.findOne({
+      where: {
+        userId,
+        blockedUserId,
+      },
+    });
+
+    return user;
+  }
+
   /**
    * 차단된 유저인지 체크
    * @param userId

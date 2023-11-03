@@ -68,6 +68,18 @@ export class MapperUserFollowRepository {
     };
   }
 
+  // * 팔로잉한 유저
+  async findOne(userId: number, followingId: number) {
+    const user = await this.mapperUserFollowRepository.findOne({
+      where: {
+        userId,
+        followingId,
+      },
+    });
+
+    return user;
+  }
+
   /**
    * 나를 팔로우한 유저 목록
    * @param userId

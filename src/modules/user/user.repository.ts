@@ -1,8 +1,12 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DB_CONST_REPOSITORY } from 'src/config';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
-import { UserFindOneVo } from './vo';
 import { dataSource } from '../../config';
 import { UserCreateDto, UserUpdateDto, UserUpdateStatusDto } from './dto';
 import { UserHistory } from '../user-history/user-history.entity';
@@ -95,6 +99,19 @@ export class UserRepository {
       .andWhere('user.delYn = :delYn', { delYn: YN.N })
       .getOne();
 
+    // * 나를 차다한 유저 프로필 검색 불가
+    if (user && viewerId) {
+      const blockedMe = await UserBlock.createQueryBuilder('userBlock')
+        .where('userBlock.userId = :userId', { userId: user.id })
+        .andWhere('userBlock.blockedUserId = :blockedUserId', {
+          blockedUserId: viewerId,
+        })
+        .getOne();
+
+      if (blockedMe)
+        throw new NotFoundException('존재 하지 않는 사용자 입니다');
+    }
+
     // * 팔로잉 유저
     if (user) {
       const followingUsers = await MapperUserFollow.createQueryBuilder('mapper')
@@ -118,6 +135,7 @@ export class UserRepository {
         user.followerIds = [];
       }
     }
+
     // * 차단 여부 by Viewer (로그인 한 유저)
     if (user && viewerId) {
       const isBlocked = await UserBlock.createQueryBuilder('userBlock')
