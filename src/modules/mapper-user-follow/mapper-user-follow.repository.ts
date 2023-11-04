@@ -11,6 +11,7 @@ import { User } from '../user/user.entity';
 import { PaginateResponseVo } from 'src/core';
 import { YN } from 'src/common';
 import { FollowFindOneVo } from './vo';
+import { UserFindOneVo } from '../user/vo';
 
 @Injectable()
 export class MapperUserFollowRepository {
@@ -31,7 +32,7 @@ export class MapperUserFollowRepository {
   async findAllByFollowings(
     userId: number,
     mapperUserfollowListDto: MapperUserFollowListDto,
-  ): Promise<PaginateResponseVo<FollowFindOneVo>> {
+  ): Promise<PaginateResponseVo<UserFindOneVo>> {
     const page = mapperUserfollowListDto.page;
     const limit = mapperUserfollowListDto.limit;
     const offset = (page - 1) * limit;
@@ -58,7 +59,7 @@ export class MapperUserFollowRepository {
     const lasPage = Math.ceil(totalCount / limit);
 
     return {
-      items: items,
+      items: items.map((item) => item.following),
       totalCount: totalCount,
       pageInfo: {
         page,
@@ -89,7 +90,7 @@ export class MapperUserFollowRepository {
   async findAllByFollowers(
     userId: number,
     mapperUserfollowListDto: MapperUserFollowListDto,
-  ): Promise<PaginateResponseVo<FollowFindOneVo>> {
+  ): Promise<PaginateResponseVo<UserFindOneVo>> {
     const page = mapperUserfollowListDto.page;
     const limit = mapperUserfollowListDto.limit;
     const offset = (page - 1) * limit;
@@ -116,7 +117,7 @@ export class MapperUserFollowRepository {
     const lasPage = Math.ceil(totalCount / limit);
 
     return {
-      items: items,
+      items: items.map((item) => item.follower),
       totalCount: totalCount,
       pageInfo: {
         page,

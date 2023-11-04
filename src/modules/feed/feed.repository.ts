@@ -52,7 +52,7 @@ export class FeedRepository {
         'user.profileImage',
       ])
       .where('feed.userId IN (:...userId)', {
-        userId: [user.followingIds, user.id],
+        userId: [...user.followingIds, user.id],
       })
       .andWhere('user.delYn = :delYn', { delYn: YN.N })
       .andWhere('feed.displayYn = :displayYn', { displayYn: YN.Y })

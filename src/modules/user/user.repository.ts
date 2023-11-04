@@ -54,6 +54,7 @@ export class UserRepository {
           });
         }),
       )
+      .andWhere('user.delYn = :delYn', { delYn: YN.N })
       .orderBy('user.createdAt', ORDER_BY_VALUE.ASC)
       .offset(offset)
       .limit(limit);
@@ -101,22 +102,22 @@ export class UserRepository {
 
     // * 팔로잉 유저
     const followingUsers = await MapperUserFollow.createQueryBuilder('mapper')
-      .innerJoinAndSelect('mapper.following', 'user')
       .where('mapper.userId = :userId', { userId: id })
       .getMany();
-    if (followingUsers.length > 0) {
-      user.followings = followingUsers;
+    if (followingUsers && followingUsers.length > 0) {
       user.followingIds = followingUsers.map((follow) => follow.followingId);
+    } else {
+      user.followingIds = [];
     }
 
     // * 팔로워 유저
     const followerUsers = await MapperUserFollow.createQueryBuilder('mapper')
-      .innerJoinAndSelect('mapper.follower', 'user')
       .where('mapper.followingId = :followingId', { followingId: id })
       .getMany();
-    if (followerUsers.length > 0) {
-      user.followers = followerUsers;
+    if (followerUsers && followerUsers.length > 0) {
       user.followerIds = followerUsers.map((follow) => follow.userId);
+    } else {
+      user.followerIds = [];
     }
 
     return user;

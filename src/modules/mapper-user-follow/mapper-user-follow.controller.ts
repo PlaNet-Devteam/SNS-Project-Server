@@ -20,6 +20,7 @@ import {
 import { MapperUserFollow } from './mapper-user-follow.entity';
 import { BaseResponseVo, PaginateResponseVo, UserGuard } from 'src/core';
 import { FollowFindOneVo } from './vo';
+import { UserFindOneVo } from '../user/vo';
 
 @Controller()
 @ApiTags('MPPAER USER FOLLOW')
@@ -34,8 +35,8 @@ export class MapperUserFollowController {
   async findAllFollowings(
     @Param('username') username: string,
     @Query() mapperUserfollowListDto: MapperUserFollowListDto,
-  ): Promise<BaseResponseVo<PaginateResponseVo<FollowFindOneVo>>> {
-    return new BaseResponseVo<PaginateResponseVo<FollowFindOneVo>>(
+  ): Promise<BaseResponseVo<PaginateResponseVo<UserFindOneVo>>> {
+    return new BaseResponseVo<PaginateResponseVo<UserFindOneVo>>(
       await this.mapperUserFollowService.findAllByFollowings(
         username,
         mapperUserfollowListDto,
