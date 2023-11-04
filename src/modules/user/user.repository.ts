@@ -5,16 +5,23 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DB_CONST_REPOSITORY } from 'src/config';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { User } from './user.entity';
 import { dataSource } from '../../config';
-import { UserCreateDto, UserUpdateDto, UserUpdateStatusDto } from './dto';
+import {
+  UserCreateDto,
+  UserListDto,
+  UserUpdateDto,
+  UserUpdateStatusDto,
+} from './dto';
 import { UserHistory } from '../user-history/user-history.entity';
 import { HashService } from '../auth/hash.service';
 import { MapperUserFollow } from '../mapper-user-follow/mapper-user-follow.entity';
-import { USER_STATUS, YN } from 'src/common';
+import { ORDER_BY_VALUE, USER_STATUS, YN } from 'src/common';
 import { UserDeleteDto } from './dto/user-delete.dto';
 import { UserBlock } from '../user-block/user-block.entity';
+import { PaginateResponseVo } from 'src/core';
+import { UserFindOneVo } from './vo';
 
 @Injectable()
 export class UserRepository {
@@ -25,6 +32,45 @@ export class UserRepository {
   ) {}
 
   // SELECTS
+
+  /**
+   * 전체 유저
+   * @param userListDto
+   * @returns
+   */
+  public async findAll(
+    userListDto?: UserListDto,
+  ): Promise<PaginateResponseVo<UserFindOneVo>> {
+    const page = userListDto?.page;
+    const limit = userListDto?.limit;
+    const offset = (page - 1) * limit;
+
+    const blockUsers = this.userRepository
+      .createQueryBuilder('user')
+      .where(
+        new Brackets((qb) => {
+          qb.where('user.username LIKE :query OR user.nickname LIKE :query', {
+            query: `%${userListDto.query}%`,
+          });
+        }),
+      )
+      .orderBy('user.createdAt', ORDER_BY_VALUE.ASC)
+      .offset(offset)
+      .limit(limit);
+
+    const [items, totalCount] = await blockUsers.getManyAndCount();
+    const lasPage = Math.ceil(totalCount / limit);
+
+    return {
+      items: items,
+      totalCount: totalCount,
+      pageInfo: {
+        page,
+        limit,
+        isLast: page === lasPage ? true : false,
+      },
+    };
+  }
 
   /**
    * 아이디로 찾기
@@ -55,17 +101,23 @@ export class UserRepository {
 
     // * 팔로잉 유저
     const followingUsers = await MapperUserFollow.createQueryBuilder('mapper')
+      .innerJoinAndSelect('mapper.following', 'user')
       .where('mapper.userId = :userId', { userId: id })
       .getMany();
-    if (followingUsers.length > 0)
+    if (followingUsers.length > 0) {
+      user.followings = followingUsers;
       user.followingIds = followingUsers.map((follow) => follow.followingId);
+    }
 
     // * 팔로워 유저
     const followerUsers = await MapperUserFollow.createQueryBuilder('mapper')
+      .innerJoinAndSelect('mapper.follower', 'user')
       .where('mapper.followingId = :followingId', { followingId: id })
       .getMany();
-    if (followerUsers.length > 0)
+    if (followerUsers.length > 0) {
+      user.followers = followerUsers;
       user.followerIds = followerUsers.map((follow) => follow.userId);
+    }
 
     return user;
   }
