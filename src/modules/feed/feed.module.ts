@@ -6,9 +6,10 @@ import { FeedService } from './feed.service';
 import { FeedController } from './feed.controller';
 import { UserModule } from '../user/user.module';
 import { userProviders } from '../user/user.provider';
+import { UserBlockModule } from '../user-block/user-block.module';
 
 @Module({
-  imports: [DatabaseModule, UserModule],
+  imports: [DatabaseModule, UserModule, UserBlockModule],
   controllers: [FeedController],
   providers: [...userProviders, ...feedProviders, FeedRepository, FeedService],
   exports: [FeedModule, FeedRepository, FeedService],

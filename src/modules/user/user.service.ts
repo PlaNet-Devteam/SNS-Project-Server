@@ -30,8 +30,14 @@ export class UserService {
    * @param username
    * @returns UserFindOneVo
    */
-  public async findUserByUsername(username: string): Promise<UserFindOneVo> {
-    const user = await this.userRepository.findUserByUsername(username);
+  public async findUserByUsername(
+    username: string,
+    viewerId?: number,
+  ): Promise<UserFindOneVo> {
+    const user = await this.userRepository.findUserByUsername(
+      username,
+      viewerId,
+    );
     if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
     return user;
   }

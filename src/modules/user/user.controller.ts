@@ -9,12 +9,18 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { UserFindOneVo } from './vo';
-import { UserCreateDto, UserUpdateDto, UserUpdateStatusDto } from './dto';
+import {
+  UserByViewerDto,
+  UserCreateDto,
+  UserUpdateDto,
+  UserUpdateStatusDto,
+} from './dto';
 import { BaseResponseVo, UserGuard } from 'src/core';
 import { UserInfo } from 'src/common';
 import { User } from './user.entity';
@@ -49,9 +55,13 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   public async findOneUserByUsername(
     @Param('username') username: string,
+    @Query() userByViewerDto: UserByViewerDto,
   ): Promise<BaseResponseVo<UserFindOneVo>> {
     return new BaseResponseVo<UserFindOneVo>(
-      await this.userService.findUserByUsername(username),
+      await this.userService.findUserByUsername(
+        username,
+        userByViewerDto.viewerId,
+      ),
     );
   }
 

@@ -1,8 +1,12 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DB_CONST_REPOSITORY } from 'src/config';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
-import { UserFindOneVo } from './vo';
 import { dataSource } from '../../config';
 import { UserCreateDto, UserUpdateDto, UserUpdateStatusDto } from './dto';
 import { UserHistory } from '../user-history/user-history.entity';
@@ -10,6 +14,7 @@ import { HashService } from '../auth/hash.service';
 import { MapperUserFollow } from '../mapper-user-follow/mapper-user-follow.entity';
 import { USER_STATUS, YN } from 'src/common';
 import { UserDeleteDto } from './dto/user-delete.dto';
+import { UserBlock } from '../user-block/user-block.entity';
 
 @Injectable()
 export class UserRepository {
@@ -84,12 +89,28 @@ export class UserRepository {
    * @param username
    * @returns User
    */
-  public async findUserByUsername(username: string): Promise<User> {
+  public async findUserByUsername(
+    username: string,
+    viewerId?: number,
+  ): Promise<User> {
     const user = await this.userRepository
       .createQueryBuilder('user')
       .where('user.username = :username', { username: username })
       .andWhere('user.delYn = :delYn', { delYn: YN.N })
       .getOne();
+
+    // * 나를 차다한 유저 프로필 검색 불가
+    if (user && viewerId) {
+      const blockedMe = await UserBlock.createQueryBuilder('userBlock')
+        .where('userBlock.userId = :userId', { userId: user.id })
+        .andWhere('userBlock.blockedUserId = :blockedUserId', {
+          blockedUserId: viewerId,
+        })
+        .getOne();
+
+      if (blockedMe)
+        throw new NotFoundException('존재 하지 않는 사용자 입니다');
+    }
 
     // * 팔로잉 유저
     if (user) {
@@ -113,6 +134,18 @@ export class UserRepository {
       } else {
         user.followerIds = [];
       }
+    }
+
+    // * 차단 여부 by Viewer (로그인 한 유저)
+    if (user && viewerId) {
+      const isBlocked = await UserBlock.createQueryBuilder('userBlock')
+        .where('userBlock.blockedUserId = :blockedUserId', {
+          blockedUserId: user.id,
+        })
+        .andWhere('userBlock.userId = :userId', { userId: viewerId })
+        .getExists();
+
+      user.isBlockedByViewer = isBlocked;
     }
 
     return user;

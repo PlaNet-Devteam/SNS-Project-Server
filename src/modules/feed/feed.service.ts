@@ -11,12 +11,14 @@ import { FeedCreateDto, FeedListDto, FeedUpdateDto } from './dto';
 import { Feed } from './feed.entity';
 import { PaginateResponseVo } from 'src/core';
 import { User } from '../user/user.entity';
+import { UserBlockRepository } from '../user-block/user-block.repository';
 
 @Injectable()
 export class FeedService {
   constructor(
     private readonly feedRepository: FeedRepository,
     private readonly userRepository: UserRepository,
+    private readonly userBlockRepository: UserBlockRepository,
   ) {}
 
   // GET SERVICES
@@ -36,10 +38,17 @@ export class FeedService {
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
     const user = await this.userRepository.findUserByUsername(username);
     if (!user) throw new NotFoundException();
-    console.log(user);
+
+    // * 차단 여부 체크 => 차단된 유저의 피드 빈배열 반환
+    const isBlocked = await this.userBlockRepository.checkIsBlocked(
+      user.id,
+      feedListDto.viewerId,
+    );
+
+    if (isBlocked) return new PaginateResponseVo<FeedFindOneVo>();
 
     const feeds = await this.feedRepository.findAllByUser(user.id, feedListDto);
-    if (!feeds) throw new NotFoundException();
+
     return feeds;
   }
 
