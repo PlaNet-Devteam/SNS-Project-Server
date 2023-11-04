@@ -18,10 +18,11 @@ import { UserFindOneVo } from './vo';
 import {
   UserByViewerDto,
   UserCreateDto,
+  UserListDto,
   UserUpdateDto,
   UserUpdateStatusDto,
 } from './dto';
-import { BaseResponseVo, UserGuard } from 'src/core';
+import { BaseResponseVo, PaginateResponseVo, UserGuard } from 'src/core';
 import { UserInfo } from 'src/common';
 import { User } from './user.entity';
 import { UserDeleteDto } from './dto/user-delete.dto';
@@ -30,6 +31,16 @@ import { UserDeleteDto } from './dto/user-delete.dto';
 @ApiTags('USER')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async findAll(
+    @Query() userListDto?: UserListDto,
+  ): Promise<BaseResponseVo<PaginateResponseVo<UserFindOneVo>>> {
+    return new BaseResponseVo<PaginateResponseVo<UserFindOneVo>>(
+      await this.userService.findAll(userListDto),
+    );
+  }
 
   /**
    * 아이디로 상세 호출

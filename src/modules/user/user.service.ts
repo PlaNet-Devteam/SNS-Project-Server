@@ -5,14 +5,31 @@ import {
 } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { UserFindOneVo } from './vo';
-import { UserCreateDto, UserUpdateDto, UserUpdateStatusDto } from './dto';
+import {
+  UserCreateDto,
+  UserListDto,
+  UserUpdateDto,
+  UserUpdateStatusDto,
+} from './dto';
 import { UserDeleteDto } from './dto/user-delete.dto';
+import { PaginateResponseVo } from 'src/core';
 
 @Injectable()
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
   // GET SERVICES
+
+  /**
+   *
+   * @param userListDto
+   * @returns
+   */
+  public async findAll(
+    userListDto?: UserListDto,
+  ): Promise<PaginateResponseVo<UserFindOneVo>> {
+    return await this.userRepository.findAll(userListDto);
+  }
 
   /**
    *
