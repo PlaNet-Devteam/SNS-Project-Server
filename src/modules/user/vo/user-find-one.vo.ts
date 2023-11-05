@@ -17,4 +17,7 @@ export class UserFindOneVo implements Partial<User> {
   gender?: GENDER;
   followers?: number[];
   followings?: number[];
+  lastLoginAt?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
