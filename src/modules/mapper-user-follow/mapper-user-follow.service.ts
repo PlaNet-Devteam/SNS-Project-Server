@@ -9,6 +9,7 @@ import { UserRepository } from '../user/user.repository';
 import { MapperUserFollow } from './mapper-user-follow.entity';
 import { PaginateResponseVo } from 'src/core';
 import { FollowFindOneVo } from './vo';
+import { UserFindOneVo } from '../user/vo';
 
 @Injectable()
 export class MapperUserFollowService {
@@ -20,7 +21,7 @@ export class MapperUserFollowService {
   async findAllByFollowings(
     username: string,
     mapperUserfollowListDto: MapperUserFollowListDto,
-  ): Promise<PaginateResponseVo<FollowFindOneVo>> {
+  ): Promise<PaginateResponseVo<UserFindOneVo>> {
     const user = await this.userRepository.findUserByUsername(username);
     if (!user) throw new NotFoundException('존재하지 않는 사용자 입니다');
     return await this.mapperUserFollowRepository.findAllByFollowings(
@@ -32,7 +33,7 @@ export class MapperUserFollowService {
   async findAllByFollowers(
     username: string,
     mapperUserfollowListDto: MapperUserFollowListDto,
-  ): Promise<PaginateResponseVo<FollowFindOneVo>> {
+  ): Promise<PaginateResponseVo<UserFindOneVo>> {
     const user = await this.userRepository.findUserByUsername(username);
     if (!user) throw new NotFoundException('존재하지 않는 사용자 입니다');
     return await this.mapperUserFollowRepository.findAllByFollowers(
