@@ -52,6 +52,15 @@ export class FeedService {
     return feeds;
   }
 
+  public async findAllByBookmark(userId: number, feedListDto?: FeedListDto) {
+    const feeds = await this.feedRepository.findAllByBookmark(
+      userId,
+      feedListDto,
+    );
+    if (!feeds) throw new NotFoundException();
+    return feeds;
+  }
+
   /**
    *
    * @param id
@@ -75,6 +84,18 @@ export class FeedService {
     feedCreateDto: FeedCreateDto,
   ): Promise<Feed> {
     return await this.feedRepository.createFeed(userId, feedCreateDto);
+  }
+
+  public async likeFeed(userId: number, feedId: number) {
+    const feed = await this.feedRepository.findOneFeed(feedId);
+    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    return await this.feedRepository.likeFeed(userId, feedId);
+  }
+
+  public async bookmarkFeed(userId: number, feedId: number) {
+    const feed = await this.feedRepository.findOneFeed(feedId);
+    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    return await this.feedRepository.bookmarkFeed(userId, feedId);
   }
 
   // UPDATE SERVICES
@@ -106,15 +127,15 @@ export class FeedService {
     return await this.feedRepository.deleteFeed(userId, feedId);
   }
 
-  public async likeFeed(userId: number, feedId: number) {
-    const feed = await this.feedRepository.findOneFeed(feedId);
-    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
-    return await this.feedRepository.likeFeed(userId, feedId);
-  }
-
   public async deleteLikeFeed(userId: number, feedId: number) {
     const feed = await this.feedRepository.findOneFeed(feedId);
     if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
     return await this.feedRepository.deleteLikeFeed(userId, feedId);
+  }
+
+  public async deleteBookmarkFeed(userId: number, feedId: number) {
+    const feed = await this.feedRepository.findOneFeed(feedId);
+    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    return await this.feedRepository.deleteBookmarkFeed(userId, feedId);
   }
 }

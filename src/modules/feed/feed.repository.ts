@@ -3,12 +3,13 @@ import { DB_CONST_REPOSITORY, dataSource } from 'src/config';
 import { Repository } from 'typeorm';
 import { Feed } from './feed.entity';
 import { FeedFindOneVo } from './vo';
-import { FEED_STATUS, USER_STATUS, YN } from 'src/common';
+import { FEED_STATUS, ORDER_BY_VALUE, YN } from 'src/common';
 import { FeedCreateDto, FeedListDto, FeedUpdateDto } from './dto';
 import { FeedImage } from '../feed-image/feed-image.entity';
 import { BaseResponseVo, PaginateResponseVo } from 'src/core';
 import { User } from '../user/user.entity';
 import { FeedLike } from '../feed-like/feed-like.entity';
+import { FeedBookmark } from '../feed-bookmark/feed-bookmark.entity';
 
 @Injectable()
 export class FeedRepository {
@@ -68,11 +69,14 @@ export class FeedRepository {
       item.feedImages = await FeedImage.createQueryBuilder('feedImage')
         .where('feedImage.feedId = :feedId', { feedId: item.id })
         .getMany();
-      // 좋아요 체크 여부
-      if (feedListDto.userId) {
+
+      // * 좋아요 체크 여부
+      if (user.id) {
         const liked = await FeedLike.createQueryBuilder('feedLike')
           .where('feedLike.feedId = :feedId', { feedId: item.id })
-          .andWhere('feedLike.userId = :userId', { userId: feedListDto.userId })
+          .andWhere('feedLike.userId = :userId', {
+            userId: user.id,
+          })
           .getOne();
         if (liked) {
           item.likedYn = true;
@@ -80,6 +84,22 @@ export class FeedRepository {
           item.likedYn = false;
         }
       }
+
+      // * 북마크 체크 여부
+      if (user.id) {
+        const liked = await FeedBookmark.createQueryBuilder('feedBookmark')
+          .where('feedBookmark.feedId = :feedId', { feedId: item.id })
+          .andWhere('feedBookmark.userId = :userId', {
+            userId: user.id,
+          })
+          .getOne();
+        if (liked) {
+          item.bookmarkedYn = true;
+        } else {
+          item.bookmarkedYn = false;
+        }
+      }
+
       // TODO: 좋아오 유저
     }
 
@@ -144,6 +164,48 @@ export class FeedRepository {
 
     return {
       items: items,
+      totalCount: totalCount,
+      pageInfo: {
+        page,
+        limit,
+        isLast: page === lasPage ? true : false,
+      },
+    };
+  }
+
+  /**
+   * 유저별 피드 목록
+   * @param userId
+   * @returns
+   */
+  public async findAllByBookmark(
+    userId: number,
+    feedListDto?: FeedListDto,
+  ): Promise<PaginateResponseVo<FeedFindOneVo>> {
+    const page = feedListDto?.page;
+    const limit = feedListDto?.limit;
+    const offset = (page - 1) * limit;
+
+    const feeds = FeedBookmark.createQueryBuilder('feedBookmark')
+      .leftJoinAndSelect('feedBookmark.feed', 'feed')
+      .where('feed.displayYn = :displayYn', { displayYn: YN.Y })
+      .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE })
+      .andWhere('feedBookmark.userId = :userId', { userId: userId })
+      .orderBy('feed.createdAt', ORDER_BY_VALUE.DESC)
+      .offset(offset)
+      .limit(limit);
+
+    const [items, totalCount] = await feeds.getManyAndCount();
+    const lasPage = Math.ceil(totalCount / limit);
+
+    for (const item of items) {
+      item.feed.feedImages = await FeedImage.createQueryBuilder('feedImage')
+        .where('feedImage.feedId = :feedId', { feedId: item.feedId })
+        .getMany();
+    }
+
+    return {
+      items: items.map((item) => item.feed),
       totalCount: totalCount,
       pageInfo: {
         page,
@@ -231,6 +293,32 @@ export class FeedRepository {
     return feed;
   }
 
+  /** 피드 좋아요 */
+  public async likeFeed(userId: number, feedId: number) {
+    await dataSource.transaction(async (transaction) => {
+      let newLike = new FeedLike().set({
+        feedId,
+        userId,
+      });
+      newLike = await transaction.save(newLike);
+
+      let feed = await this.findOneFeed(feedId);
+      feed.likeCount++;
+      feed = await transaction.save(feed);
+    });
+  }
+
+  /** 피드 북마크 */
+  public async bookmarkFeed(userId: number, feedId: number) {
+    await dataSource.transaction(async (transaction) => {
+      let newLike = new FeedBookmark().set({
+        feedId,
+        userId,
+      });
+      newLike = await transaction.save(newLike);
+    });
+  }
+
   // UPDATE
 
   /**
@@ -310,21 +398,6 @@ export class FeedRepository {
     });
   }
 
-  /** 피드 좋아요 */
-  public async likeFeed(userId: number, feedId: number) {
-    await dataSource.transaction(async (transaction) => {
-      let newLike = new FeedLike().set({
-        feedId,
-        userId,
-      });
-      newLike = await transaction.save(newLike);
-
-      let feed = await this.findOneFeed(feedId);
-      feed.likeCount++;
-      feed = await transaction.save(feed);
-    });
-  }
-
   /** 피드 좋아요 해제 */
   public async deleteLikeFeed(userId: number, feedId: number) {
     await dataSource.transaction(async (transaction) => {
@@ -340,5 +413,16 @@ export class FeedRepository {
       feed.likeCount--;
       feed = await transaction.save(feed);
     });
+  }
+
+  /** 피드 북마크 해제 */
+  public async deleteBookmarkFeed(userId: number, feedId: number) {
+    await dataSource
+      .createQueryBuilder()
+      .delete()
+      .from(FeedBookmark)
+      .where('feedId = :feedId', { feedId: feedId })
+      .andWhere('userId = :userId', { userId: userId })
+      .execute();
   }
 }
