@@ -4,7 +4,6 @@ import { BaseUpdateEntity } from 'src/core';
 import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 import { User } from '../user/user.entity';
 import { FeedImage } from '../feed-image/feed-image.entity';
-import { FeedLike } from '../feed-like/feed-like.entity';
 
 @Entity({ name: 'feed' })
 export class Feed extends BaseUpdateEntity<Feed> {
@@ -60,5 +59,7 @@ export class Feed extends BaseUpdateEntity<Feed> {
   @OneToMany((type) => FeedImage, (feedImages) => feedImages.feed)
   feedImages?: FeedImage[];
 
+  // no database
   likedYn?: boolean;
+  bookmarkedYn?: boolean;
 }

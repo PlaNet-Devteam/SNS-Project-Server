@@ -52,6 +52,24 @@ export class FeedController {
   }
 
   /**
+   * 피드 북마크 목록
+   * @param user
+   * @param feedListDto
+   * @returns
+   */
+  @Get('/feed/bookmark')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(new UserGuard())
+  public async findAllByBookmark(
+    @UserInfo() user: User,
+    @Query() feedListDto: FeedListDto,
+  ): Promise<BaseResponseVo<PaginateResponseVo<FeedFindOneVo>>> {
+    return new BaseResponseVo<PaginateResponseVo<FeedFindOneVo>>(
+      await this.feedService.findAllByBookmark(user.id, feedListDto),
+    );
+  }
+
+  /**
    * 피드아이디로 상세 호출
    * @param id
    * @returns
@@ -96,6 +114,22 @@ export class FeedController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return await this.feedService.likeFeed(user.id, id);
+  }
+
+  /**
+   * 피드 좋아요
+   * @param user
+   * @param id
+   * @returns
+   */
+  @Post('/feed/:id([0-9]+)/bookmark')
+  @HttpCode(HttpStatus.CREATED)
+  @UseGuards(new UserGuard())
+  public async bookmarkFeed(
+    @UserInfo() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return await this.feedService.bookmarkFeed(user.id, id);
   }
 
   // PATCH ENDPOINTS
@@ -148,5 +182,21 @@ export class FeedController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return await this.feedService.deleteLikeFeed(user.id, id);
+  }
+
+  /**
+   * 피드 좋아요 해제
+   * @param user
+   * @param id
+   * @returns
+   */
+  @Delete('/feed/:id([0-9]+)/bookmark')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(new UserGuard())
+  public async deleteBookmarkFeed(
+    @UserInfo() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return await this.feedService.deleteBookmarkFeed(user.id, id);
   }
 }
