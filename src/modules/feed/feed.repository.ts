@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { DB_CONST_REPOSITORY, dataSource } from 'src/config';
 import { Repository } from 'typeorm';
 import { Feed } from './feed.entity';
@@ -10,6 +10,8 @@ import { BaseResponseVo, PaginateResponseVo } from 'src/core';
 import { User } from '../user/user.entity';
 import { FeedLike } from '../feed-like/feed-like.entity';
 import { FeedBookmark } from '../feed-bookmark/feed-bookmark.entity';
+import { MapperFeedTag } from '../mapper-feed-tag/mapper-feed-tag.entity';
+import { Tag } from '../tag/tag.entity';
 
 @Injectable()
 export class FeedRepository {
@@ -265,7 +267,7 @@ export class FeedRepository {
       let newFeed = new Feed(feedCreateDto);
       newFeed.userId = userId;
       newFeed = await transaction.save(newFeed);
-      // TODO: feed image  생성
+      // * feed image  생성
       if (feedCreateDto.feedImages && feedCreateDto.feedImages.length > 0) {
         await Promise.all(
           feedCreateDto.feedImages.map(async (image) => {
@@ -278,14 +280,42 @@ export class FeedRepository {
           }),
         );
       }
-      // TODO: user feed count 증가
+      // * user feed count 증가
       let user = await this.userRepository.findOne({
         where: { id: userId },
       });
 
       user.feedCount++;
       user = await transaction.save(user);
-      // TODO: description 에 tag 있는 경우 tag, mapper_feed_tag 테이블 생성
+
+      // * tagNames 배열 체크 후 FEED TAG MAPPER 테이블 생성
+      if (feedCreateDto.tagNames && feedCreateDto.tagNames.length > 0) {
+        await Promise.all(
+          feedCreateDto.tagNames.map(async (tagName) => {
+            // * Tag 테이블에서 해당 태그 검색
+            let tag = await Tag.findOne({
+              where: {
+                tagName,
+              },
+            });
+
+            // * 존재하는 태그 가 없을 경우 TAG 테이블에 새로 생성
+            if (!tag) {
+              tag = new Tag({
+                tagName,
+              });
+              await transaction.save(tag);
+            }
+
+            // * FEED ID 와 TAG ID MAPPER 생성
+            const newMapper = new MapperFeedTag({
+              feedId: newFeed.id,
+              tagId: tag.id,
+            });
+            await transaction.save(newMapper);
+          }),
+        );
+      }
 
       return newFeed;
     });

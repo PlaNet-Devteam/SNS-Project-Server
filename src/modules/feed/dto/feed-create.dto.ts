@@ -27,4 +27,9 @@ export class FeedCreateDto
   @IsEnum(FEED_STATUS, { each: true })
   @Expose()
   status?: FEED_STATUS = FEED_STATUS.ACTIVE;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Expose()
+  tagNames?: string[];
 }
