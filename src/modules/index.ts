@@ -8,3 +8,5 @@ export * from './comment/comment.module';
 export * from './comment-reply/comment-reply.module';
 export * from './chat/chat.module';
 export * from './mapper-user-follow/mapper-user-follow.module';
+export * from './mapper-feed-tag/mapper-feed-tag.module';
+export * from './tag/tag.module';
