@@ -98,6 +98,7 @@ export class UserRepository {
         'user.gender',
         'user.lastLoginAt',
         'user.createdAt',
+        'user.inactiveAt',
       ])
       .where('user.id = :id', { id: id })
       .getOne();
@@ -349,6 +350,7 @@ export class UserRepository {
         where: { id: id },
       });
 
+      // * 유저 상태 활성화 & 삭제 여부 N
       updatedUser.status = USER_STATUS.ACTIVE;
       updatedUser.inactiveAt = null;
       updatedUser.delYn = YN.N;
@@ -387,6 +389,7 @@ export class UserRepository {
 
       // * 유저 상태 비활성화 & 삭제 여부 Y
       updatedUser.status = USER_STATUS.INACTIVE;
+      updatedUser.inactiveAt = new Date();
       updatedUser.delYn = YN.Y;
       updatedUser = await transaction.save(updatedUser);
 
