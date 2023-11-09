@@ -138,6 +138,7 @@ export class CommentRepository {
     const comment = await dataSource.transaction(async (transaction) => {
       const comment = await this.findOneComment(commentId);
       comment.comment = comemntUpdateDto.comment;
+      comment.updatedAt = new Date();
       await transaction.save(comment);
       return comment;
     });

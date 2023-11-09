@@ -387,6 +387,7 @@ export class FeedRepository {
       // }
       feed.description = feedUpdateDto.description;
       // feed.feedImages = feedUpdateDto.feedImages;
+      feed.updatedAt = new Date();
       feed = await transaction.save(feed);
       return feed;
     });
