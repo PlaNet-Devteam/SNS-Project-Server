@@ -40,6 +40,30 @@ export class FeedController {
     );
   }
 
+  @Get('/feed/tag')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(new UserGuard())
+  public async findAllByTag(
+    @UserInfo() user: User,
+    @Query() feedListDto: FeedListDto,
+  ): Promise<BaseResponseVo<PaginateResponseVo<FeedFindOneVo>>> {
+    return new BaseResponseVo<PaginateResponseVo<FeedFindOneVo>>(
+      await this.feedService.findAllByTag(user, feedListDto),
+    );
+  }
+
+  @Get('/feed/following')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(new UserGuard())
+  public async findAllByFollowing(
+    @UserInfo() user: User,
+    @Query() feedListDto: FeedListDto,
+  ): Promise<BaseResponseVo<PaginateResponseVo<FeedFindOneVo>>> {
+    return new BaseResponseVo<PaginateResponseVo<FeedFindOneVo>>(
+      await this.feedService.findAllByFollowing(user, feedListDto),
+    );
+  }
+
   @Get('/feed/user/:username')
   @HttpCode(HttpStatus.OK)
   public async findAllByUser(
