@@ -68,9 +68,9 @@ export class FeedService {
     return feeds;
   }
 
-  public async findAllByBookmark(userId: number, feedListDto?: FeedListDto) {
+  public async findAllByBookmark(user: User, feedListDto?: FeedListDto) {
     const feeds = await this.feedRepository.findAllByBookmark(
-      userId,
+      user,
       feedListDto,
     );
     if (!feeds) throw new NotFoundException();
@@ -78,12 +78,23 @@ export class FeedService {
   }
 
   /**
-   *
+   * 피드 찾기
    * @param id
    * @returns FeedFindOneVo
    */
   public async findOne(id: number): Promise<FeedFindOneVo> {
     const feed = await this.feedRepository.findOneFeed(id);
+    if (!feed) throw new NotFoundException();
+    return feed;
+  }
+
+  /**
+   * 사용자별 피드 상세
+   * @param id
+   * @returns FeedFindOneVo
+   */
+  public async findOneByUser(user: User, id: number): Promise<FeedFindOneVo> {
+    const feed = await this.feedRepository.findOneByUser(user, id);
     if (!feed) throw new NotFoundException();
     return feed;
   }
@@ -136,10 +147,10 @@ export class FeedService {
    * 피드 삭제 (FEED STATUS => DELETED)
    * @param userId
    */
-  public async deleteFeed(feedId: number) {
+  public async deleteFeed(userId: number, feedId: number) {
     const feed = await this.feedRepository.findOneFeed(feedId);
     if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
-    return await this.feedRepository.deleteFeed(feedId);
+    return await this.feedRepository.deleteFeed(userId, feedId);
   }
 
   public async deleteLikeFeed(userId: number, feedId: number) {
