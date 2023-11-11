@@ -185,11 +185,8 @@ export class FeedController {
   @Delete('/feed/:id([0-9]+)')
   @HttpCode(HttpStatus.OK)
   @UseGuards(new UserGuard())
-  public async deleteFeed(
-    @UserInfo() user: User,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
-    return await this.feedService.deleteFeed(user.id, id);
+  public async deleteFeed(@Param('id', ParseIntPipe) id: number) {
+    return await this.feedService.deleteFeed(id);
   }
 
   /**

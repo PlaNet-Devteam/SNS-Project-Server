@@ -546,12 +546,27 @@ export class FeedRepository {
   }
 
   /**
-   *  피드 삭제
-   * @param userId
+   *  피드 삭제 (FEED STATUS => DELETED)
    * @param feedId
    * @returns Feed
    */
-  public async deleteFeed(userId: number, feedId: number) {
+  public async deleteFeed(feedId: number): Promise<FeedFindOneVo> {
+    let feed = await this.feedRepository.findOne({
+      where: {
+        id: feedId,
+      },
+    });
+    feed.status = FEED_STATUS.DELETED;
+    feed = await this.feedRepository.save(feed);
+    return feed;
+  }
+
+  /**
+   * 피드 영구 삭제
+   * @param userId
+   * @param feedId
+   */
+  public async hardDeleteFeed(userId: number, feedId: number) {
     await dataSource.transaction(async (transaction) => {
       // * FEED IMAGE 삭제
       await dataSource

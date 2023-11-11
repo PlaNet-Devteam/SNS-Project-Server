@@ -133,14 +133,13 @@ export class FeedService {
   // DELETE SERVICES
 
   /**
-   * 피드 삭제
+   * 피드 삭제 (FEED STATUS => DELETED)
    * @param userId
-   * @param feedId
    */
-  public async deleteFeed(userId: number, feedId: number) {
+  public async deleteFeed(feedId: number) {
     const feed = await this.feedRepository.findOneFeed(feedId);
     if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
-    return await this.feedRepository.deleteFeed(userId, feedId);
+    return await this.feedRepository.deleteFeed(feedId);
   }
 
   public async deleteLikeFeed(userId: number, feedId: number) {
