@@ -16,6 +16,5 @@ SelectQueryBuilder.prototype.Paginate = function <Entity, T>(
   pagination: BasePaginationDto<T>,
 ): SelectQueryBuilder<Entity> {
   this.offset((pagination.page - 1) * pagination.limit).limit(pagination.limit);
-  console.log(this, pagination);
   return this;
 };
