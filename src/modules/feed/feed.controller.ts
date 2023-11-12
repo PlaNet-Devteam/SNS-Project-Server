@@ -19,7 +19,12 @@ import { BaseResponseVo, PaginateResponseVo, UserGuard } from 'src/core';
 import { FeedFindOneVo } from './vo';
 import { UserInfo } from 'src/common';
 import { User } from '../user/user.entity';
-import { FeedCreateDto, FeedListDto, FeedUpdateDto } from './dto';
+import {
+  FeedCreateDto,
+  FeedListDto,
+  FeedUpdateDto,
+  FeedUpdateStatusDto,
+} from './dto';
 
 @Controller()
 @ApiTags('FEED')
@@ -176,6 +181,40 @@ export class FeedController {
   ): Promise<BaseResponseVo<FeedFindOneVo>> {
     return new BaseResponseVo<FeedFindOneVo>(
       await this.feedService.updateFeed(id, feedUpdateDto),
+    );
+  }
+
+  /**
+   * 피드 상태 업데이트
+   * @param feedUpdateStatusDto
+   * @returns Feed
+   */
+  @Patch('/feed/:id([0-9]+)/status')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(new UserGuard())
+  public async updateFeedStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() feedUpdateStatusDto: FeedUpdateStatusDto,
+  ): Promise<BaseResponseVo<FeedFindOneVo>> {
+    return new BaseResponseVo<FeedFindOneVo>(
+      await this.feedService.updateFeedStatus(id, feedUpdateStatusDto),
+    );
+  }
+
+  /**
+   * 피드 좋아요 수 노출 상태 업데이트
+   * @param feedUpdateStatusDto
+   * @returns Feed
+   */
+  @Patch('/feed/:id([0-9]+)/show-like-count')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(new UserGuard())
+  public async updateShowLikeCount(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() feedUpdateStatusDto: FeedUpdateStatusDto,
+  ): Promise<BaseResponseVo<FeedFindOneVo>> {
+    return new BaseResponseVo<FeedFindOneVo>(
+      await this.feedService.updateShowLikeCount(id, feedUpdateStatusDto),
     );
   }
 

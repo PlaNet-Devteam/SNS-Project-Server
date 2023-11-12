@@ -27,23 +27,4 @@ export class FeedUpdateDto
   @IsOptional()
   @Expose()
   newFeedImages?: FeedImage[];
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsEnum(YN, { each: true })
-  @Default(YN.Y)
-  @Expose()
-  showLikeCountYn?: YN;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsEnum(YN, { each: true })
-  @Expose()
-  displayYn?: YN;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsEnum(FEED_STATUS, { each: true })
-  @Expose()
-  status?: FEED_STATUS;
 }

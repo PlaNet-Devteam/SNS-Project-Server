@@ -4,7 +4,12 @@ import { Repository } from 'typeorm';
 import { Feed } from './feed.entity';
 import { FeedFindOneVo } from './vo';
 import { FEED_STATUS, ORDER_BY_VALUE, YN } from 'src/common';
-import { FeedCreateDto, FeedListDto, FeedUpdateDto } from './dto';
+import {
+  FeedCreateDto,
+  FeedListDto,
+  FeedUpdateDto,
+  FeedUpdateStatusDto,
+} from './dto';
 import { FeedImage } from '../feed-image/feed-image.entity';
 import { PaginateResponseVo, generatePaginatedResponse } from 'src/core';
 import { User } from '../user/user.entity';
@@ -37,7 +42,7 @@ export class FeedRepository {
       .leftJoinAndSelect('feed.user', 'user')
       .where('user.delYn = :delYn', { delYn: YN.N })
       .andWhere('feed.displayYn = :displayYn', { displayYn: YN.Y })
-      .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE })
+      .andWhere('feed.status = :status', { status: feedListDto.status })
       .orderBy('feed.createdAt', ORDER_BY_VALUE.DESC)
       .Paginate(feedListDto);
 
@@ -142,7 +147,7 @@ export class FeedRepository {
       .createQueryBuilder('feed')
       .leftJoinAndSelect('feed.user', 'user')
       .where('feed.displayYn = :displayYn', { displayYn: YN.Y })
-      .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE })
+      .andWhere('feed.status = :status', { status: feedListDto.status })
       .andWhere('feed.userId = :userId', { userId: userId })
       .orderBy('feed.createdAt', ORDER_BY_VALUE.DESC)
       .Paginate(feedListDto);
@@ -348,23 +353,70 @@ export class FeedRepository {
     const feed = await dataSource.transaction(async (transaction) => {
       let feed = await this.findOneFeed(feedId);
 
-      feed.showLikeCountYn = feedUpdateDto.showLikeCountYn;
-      feed.status = feedUpdateDto.status;
       feed.description = feedUpdateDto.description;
 
-      // * 피드 이미지 및 피드 설명글 수정 시에 updatedAt 변경
-      if (
-        feedUpdateDto.feedImages?.length > 0 ||
-        feedUpdateDto.description?.length > 0
-      ) {
-        feed.updatedAt = new Date();
-      }
+      feed.updatedAt = new Date();
       feed = await transaction.save(feed);
       return feed;
     });
 
     return feed;
   }
+
+  /**
+   *  피드 상태 수정
+   * @param feedId
+   * @param feedUpdateDto
+   * @returns Feed
+   */
+  public async updateFeedStatus(
+    feedId: number,
+    feedUpdateStatusDto: FeedUpdateStatusDto,
+  ): Promise<FeedFindOneVo> {
+    const feed = await dataSource.transaction(async (transaction) => {
+      let feed = await this.findOneFeed(feedId);
+      feed.status = feedUpdateStatusDto.status;
+      feed = await transaction.save(feed);
+
+      let user = await this.userRepository.findOne({
+        where: {
+          id: feed.userId,
+        },
+      });
+      if (feed.status === FEED_STATUS.ACTIVE) {
+        user.feedCount++;
+      } else {
+        user.feedCount--;
+      }
+      user = await transaction.save(user);
+
+      return feed;
+    });
+
+    return feed;
+  }
+
+  /**
+   *  피드 좋아요 수 노출 상태 수정
+   * @param feedId
+   * @param feedUpdateDto
+   * @returns Feed
+   */
+  public async updateShowLikeCount(
+    feedId: number,
+    feedUpdateStatusDto: FeedUpdateStatusDto,
+  ): Promise<FeedFindOneVo> {
+    const feed = await dataSource.transaction(async (transaction) => {
+      let feed = await this.findOneFeed(feedId);
+      feed.showLikeCountYn = feedUpdateStatusDto.showLikeCountYn;
+      feed = await transaction.save(feed);
+      return feed;
+    });
+
+    return feed;
+  }
+
+  // DELETE
 
   /**
    *  피드 삭제 (FEED STATUS => DELETED)
