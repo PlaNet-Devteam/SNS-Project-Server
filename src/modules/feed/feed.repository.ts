@@ -347,31 +347,18 @@ export class FeedRepository {
   ): Promise<FeedFindOneVo> {
     const feed = await dataSource.transaction(async (transaction) => {
       let feed = await this.findOneFeed(feedId);
-      // TODO: 기존 이미지 삭제하기
 
-      // TODO: 새로운 이미지 추가하기
-      // if (
-      //   feedUpdateDto.newFeedImages &&
-      //   feedUpdateDto.newFeedImages.length > 0
-      // ) {
-      //   await Promise.all(
-      //     feedUpdateDto.newFeedImages.map(async (image) => {
-      //       let newImage = new FeedImage().set({
-      //         feedId: feed.id,
-      //         image: image.image,
-      //         sortOrder: image.sortOrder,
-      //       });
-      //       newImage = await transaction.save(newImage);
-      //     }),
-      //   );
-      //   feedUpdateDto.feedImages = [
-      //     ...feedUpdateDto.feedImages,
-      //     ...feedUpdateDto.newFeedImages,
-      //   ];
-      // }
+      feed.showLikeCountYn = feedUpdateDto.showLikeCountYn;
+      feed.status = feedUpdateDto.status;
       feed.description = feedUpdateDto.description;
-      // feed.feedImages = feedUpdateDto.feedImages;
-      feed.updatedAt = new Date();
+
+      // * 피드 이미지 및 피드 설명글 수정 시에 updatedAt 변경
+      if (
+        feedUpdateDto.feedImages?.length > 0 ||
+        feedUpdateDto.description?.length > 0
+      ) {
+        feed.updatedAt = new Date();
+      }
       feed = await transaction.save(feed);
       return feed;
     });

@@ -171,11 +171,12 @@ export class FeedController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(new UserGuard())
   public async updateFeed(
-    @UserInfo() user: User,
     @Param('id', ParseIntPipe) id: number,
     @Body() feedUpdateDto: FeedUpdateDto,
-  ): Promise<FeedFindOneVo> {
-    return await this.feedService.updateFeed(id, feedUpdateDto);
+  ): Promise<BaseResponseVo<FeedFindOneVo>> {
+    return new BaseResponseVo<FeedFindOneVo>(
+      await this.feedService.updateFeed(id, feedUpdateDto),
+    );
   }
 
   // DELETE ENDPOINTS
