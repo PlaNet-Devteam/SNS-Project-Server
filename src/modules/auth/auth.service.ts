@@ -35,7 +35,10 @@ export class AuthService {
    * @param authLoginDto
    * @returns AuthTokenVo
    */
-  public async login(authLoginDto: AuthLoginDto): Promise<AuthTokenVo> {
+  public async login(
+    authLoginDto: AuthLoginDto,
+    deviceId: string,
+  ): Promise<AuthTokenVo> {
     const user = await this.userRepository.findUserByEmail(authLoginDto.email);
     if (!user) throw new NotFoundException('User not found');
     // 비번 확인
@@ -54,10 +57,10 @@ export class AuthService {
       await this.userRepository.updateLoginDate(user.id);
 
       // * 유저 로그인 히스토리 생성
-      // TODO: device id
       const newLoginHistory = new UserLoginHistory({
         userId: user.id,
         actionType: USER_LOGIN.LOGIN,
+        deviceId: deviceId,
       });
 
       await this.userLoginHistoryRepository.createLoginHistory(newLoginHistory);
@@ -76,10 +79,11 @@ export class AuthService {
    * @param userId
    * @returns boolean
    */
-  public async logout(userId: number): Promise<boolean> {
+  public async logout(userId: number, deviceId: string): Promise<boolean> {
     const newLogoutHistory = new UserLoginHistory({
       userId: userId,
       actionType: USER_LOGIN.LOGOUT,
+      deviceId: deviceId,
     });
     await this.userLoginHistoryRepository.createLoginHistory(newLogoutHistory);
 

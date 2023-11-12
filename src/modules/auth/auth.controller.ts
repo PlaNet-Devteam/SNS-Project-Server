@@ -18,6 +18,7 @@ import { AuthTokenVo } from './vo/auth-token.vo';
 import { User } from '../user/user.entity';
 import { UserInfo } from '../../common';
 import { UserFindOneVo } from '../user/vo';
+import * as useragent from 'useragent';
 
 @Controller('auth')
 @ApiTags('AUTH')
@@ -35,8 +36,15 @@ export class AuthController {
   public async login(
     @Body() authLoginDto: AuthLoginDto,
     @Res({ passthrough: true }) response: Response,
+    @Req() request: Request,
   ): Promise<BaseResponseVo<AuthTokenVo>> {
-    const authVo = await this.authService.login(authLoginDto);
+    const userAgentString = request.headers['user-agent'];
+    const agent = useragent.parse(userAgentString) || null;
+    const deviceId =
+      agent.device.family === 'Other' ? 'DESKTOP' : agent.device.family;
+
+    const authVo = await this.authService.login(authLoginDto, deviceId);
+
     // refresh token 쿠키에 설정
     if (authVo) response.cookie('refresh-token', authVo.refreshToken);
     return new BaseResponseVo<AuthTokenVo>(authVo);
@@ -48,13 +56,22 @@ export class AuthController {
    * @returns boolean
    */
   // true일 경우에 로그아웃 시도
-  @UseGuards(new UserGuard({ loggingOut: true }))
+
   @Post('logout')
   @HttpCode(HttpStatus.ACCEPTED)
+  @UseGuards(new UserGuard({ loggingOut: true }))
   public async logout(
     @UserInfo() user: User,
+    @Req() request: Request,
   ): Promise<BaseResponseVo<boolean>> {
-    return new BaseResponseVo<boolean>(await this.authService.logout(user.id));
+    const userAgentString = request.headers['user-agent'];
+    const agent = useragent.parse(userAgentString) || null;
+    const deviceId =
+      agent.device.family === 'Other' ? 'DESKTOP' : agent.device.family;
+
+    return new BaseResponseVo<boolean>(
+      await this.authService.logout(user.id, deviceId),
+    );
   }
 
   /**
