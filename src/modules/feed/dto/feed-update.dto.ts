@@ -3,7 +3,7 @@ import { Feed } from '../feed.entity';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, MinLength } from 'class-validator';
 import { Expose, Transform } from 'class-transformer';
-import { GENDER } from 'src/common';
+import { Default, FEED_STATUS, YN } from 'src/common';
 import { FeedImage } from 'src/modules/feed-image/feed-image.entity';
 
 export class FeedUpdateDto

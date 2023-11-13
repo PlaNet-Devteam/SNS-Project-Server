@@ -2,7 +2,12 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { FeedRepository } from './feed.repository';
 import { FeedFindOneVo } from './vo';
 import { UserRepository } from '../user/user.repository';
-import { FeedCreateDto, FeedListDto, FeedUpdateDto } from './dto';
+import {
+  FeedCreateDto,
+  FeedListDto,
+  FeedUpdateDto,
+  FeedUpdateStatusDto,
+} from './dto';
 import { Feed } from './feed.entity';
 import { PaginateResponseVo } from 'src/core';
 import { User } from '../user/user.entity';
@@ -55,22 +60,24 @@ export class FeedService {
     const user = await this.userRepository.findUserByUsername(username);
     if (!user) throw new NotFoundException();
 
-    // * 차단 여부 체크 => 차단된 유저의 피드 빈배열 반환
-    const isBlocked = await this.userBlockRepository.checkIsBlocked(
-      user.id,
-      feedListDto.viewerId,
-    );
+    if (feedListDto.viewerId) {
+      // * 차단 여부 체크 => 차단된 유저의 피드 빈배열 반환
+      const isBlocked = await this.userBlockRepository.checkIsBlocked(
+        user.id,
+        feedListDto.viewerId,
+      );
 
-    if (isBlocked) return new PaginateResponseVo<FeedFindOneVo>();
+      if (isBlocked) return new PaginateResponseVo<FeedFindOneVo>();
+    }
 
     const feeds = await this.feedRepository.findAllByUser(user.id, feedListDto);
 
     return feeds;
   }
 
-  public async findAllByBookmark(userId: number, feedListDto?: FeedListDto) {
+  public async findAllByBookmark(user: User, feedListDto?: FeedListDto) {
     const feeds = await this.feedRepository.findAllByBookmark(
-      userId,
+      user,
       feedListDto,
     );
     if (!feeds) throw new NotFoundException();
@@ -78,12 +85,23 @@ export class FeedService {
   }
 
   /**
-   *
+   * 피드 찾기
    * @param id
    * @returns FeedFindOneVo
    */
   public async findOne(id: number): Promise<FeedFindOneVo> {
     const feed = await this.feedRepository.findOneFeed(id);
+    if (!feed) throw new NotFoundException();
+    return feed;
+  }
+
+  /**
+   * 사용자별 피드 상세
+   * @param id
+   * @returns FeedFindOneVo
+   */
+  public async findOneByUser(user: User, id: number): Promise<FeedFindOneVo> {
+    const feed = await this.feedRepository.findOneByUser(user, id);
     if (!feed) throw new NotFoundException();
     return feed;
   }
@@ -130,12 +148,44 @@ export class FeedService {
     return await this.feedRepository.updateFeed(feedId, feedUpdateDto);
   }
 
+  /**
+   * 피드 상태 수정
+   * @param userId
+   * @param feedUpdateDto
+   */
+  public async updateFeedStatus(
+    feedId: number,
+    feedUpdateStatusDto: FeedUpdateStatusDto,
+  ): Promise<FeedFindOneVo> {
+    const feed = await this.feedRepository.findOneFeed(feedId);
+    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    return await this.feedRepository.updateFeedStatus(
+      feedId,
+      feedUpdateStatusDto,
+    );
+  }
+  /**
+   * 피드 좋아요 수 노출 상태 수정
+   * @param userId
+   * @param feedUpdateDto
+   */
+  public async updateShowLikeCount(
+    feedId: number,
+    feedUpdateStatusDto: FeedUpdateStatusDto,
+  ): Promise<FeedFindOneVo> {
+    const feed = await this.feedRepository.findOneFeed(feedId);
+    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    return await this.feedRepository.updateShowLikeCount(
+      feedId,
+      feedUpdateStatusDto,
+    );
+  }
+
   // DELETE SERVICES
 
   /**
-   * 피드 삭제
+   * 피드 삭제 (FEED STATUS => DELETED)
    * @param userId
-   * @param feedId
    */
   public async deleteFeed(userId: number, feedId: number) {
     const feed = await this.feedRepository.findOneFeed(feedId);

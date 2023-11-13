@@ -4,9 +4,14 @@ import { Repository } from 'typeorm';
 import { Feed } from './feed.entity';
 import { FeedFindOneVo } from './vo';
 import { FEED_STATUS, ORDER_BY_VALUE, YN } from 'src/common';
-import { FeedCreateDto, FeedListDto, FeedUpdateDto } from './dto';
+import {
+  FeedCreateDto,
+  FeedListDto,
+  FeedUpdateDto,
+  FeedUpdateStatusDto,
+} from './dto';
 import { FeedImage } from '../feed-image/feed-image.entity';
-import { PaginateResponseVo } from 'src/core';
+import { PaginateResponseVo, generatePaginatedResponse } from 'src/core';
 import { User } from '../user/user.entity';
 import { FeedLike } from '../feed-like/feed-like.entity';
 import { FeedBookmark } from '../feed-bookmark/feed-bookmark.entity';
@@ -32,68 +37,27 @@ export class FeedRepository {
     user: User,
     feedListDto?: FeedListDto,
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
-    const page = feedListDto?.page;
-    const limit = feedListDto?.limit;
-    const offset = (page - 1) * limit;
-
     const feeds = this.feedRepository
       .createQueryBuilder('feed')
       .leftJoinAndSelect('feed.user', 'user')
       .where('user.delYn = :delYn', { delYn: YN.N })
       .andWhere('feed.displayYn = :displayYn', { displayYn: YN.Y })
-      .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE })
-      .orderBy('feed.createdAt', 'DESC')
-      .offset(offset)
-      .limit(limit);
+      .andWhere('feed.status = :status', { status: feedListDto.status })
+      .orderBy('feed.createdAt', ORDER_BY_VALUE.DESC)
+      .Paginate(feedListDto);
 
     const [items, totalCount] = await feeds.getManyAndCount();
-    const lasPage = Math.ceil(totalCount / limit);
 
     for (const item of items) {
-      item.feedImages = await FeedImage.createQueryBuilder('feedImage')
-        .where('feedImage.feedId = :feedId', { feedId: item.id })
-        .getMany();
-
-      // * 좋아요 체크 여부
-      if (user.id) {
-        const liked = await FeedLike.createQueryBuilder('feedLike')
-          .where('feedLike.feedId = :feedId', { feedId: item.id })
-          .andWhere('feedLike.userId = :userId', {
-            userId: user.id,
-          })
-          .getOne();
-        if (liked) {
-          item.likedYn = true;
-        } else {
-          item.likedYn = false;
-        }
-      }
-
-      // * 북마크 체크 여부
-      if (user.id) {
-        const liked = await FeedBookmark.createQueryBuilder('feedBookmark')
-          .where('feedBookmark.feedId = :feedId', { feedId: item.id })
-          .andWhere('feedBookmark.userId = :userId', {
-            userId: user.id,
-          })
-          .getOne();
-        if (liked) {
-          item.bookmarkedYn = true;
-        } else {
-          item.bookmarkedYn = false;
-        }
-      }
+      await this.processFeedItem(user.id, item);
     }
 
-    return {
-      items: items,
-      totalCount: totalCount,
-      pageInfo: {
-        page,
-        limit,
-        isLast: page === lasPage ? true : false,
-      },
-    };
+    return generatePaginatedResponse(
+      items,
+      totalCount,
+      feedListDto.page,
+      feedListDto.limit,
+    );
   }
 
   /**
@@ -104,10 +68,6 @@ export class FeedRepository {
     user: User,
     feedListDto?: FeedListDto,
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
-    const page = feedListDto?.page;
-    const limit = feedListDto?.limit;
-    const offset = (page - 1) * limit;
-
     const feeds = this.feedRepository
       .createQueryBuilder('feed')
       .innerJoinAndSelect('feed.user', 'user')
@@ -115,63 +75,29 @@ export class FeedRepository {
       .where('user.delYn = :delYn', { delYn: YN.N })
       .andWhere('feed.displayYn = :displayYn', { displayYn: YN.Y })
       .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE })
-      .orderBy('feed.createdAt', 'DESC');
+      .orderBy('feed.createdAt', ORDER_BY_VALUE.DESC);
 
     const filteredFeeds: Feed[] = (await feeds.getMany()).filter((feed) =>
       feed.tags.some((tag) => tag.tagName === feedListDto.tagName),
     );
 
-    const paginatedFeeds = filteredFeeds.slice(offset, offset + limit);
-
+    const offset = (feedListDto.page - 1) * feedListDto.limit;
+    const paginatedFeeds = filteredFeeds.slice(
+      offset,
+      offset + feedListDto.limit,
+    );
     const [items, totalCount] = [paginatedFeeds, filteredFeeds.length];
 
-    const lasPage = Math.ceil(totalCount / limit);
-
     for (const item of filteredFeeds) {
-      item.feedImages = await FeedImage.createQueryBuilder('feedImage')
-        .where('feedImage.feedId = :feedId', { feedId: item.id })
-        .getMany();
-
-      // * 좋아요 체크 여부
-      if (user.id) {
-        const liked = await FeedLike.createQueryBuilder('feedLike')
-          .where('feedLike.feedId = :feedId', { feedId: item.id })
-          .andWhere('feedLike.userId = :userId', {
-            userId: user.id,
-          })
-          .getOne();
-        if (liked) {
-          item.likedYn = true;
-        } else {
-          item.likedYn = false;
-        }
-      }
-
-      // * 북마크 체크 여부
-      if (user.id) {
-        const liked = await FeedBookmark.createQueryBuilder('feedBookmark')
-          .where('feedBookmark.feedId = :feedId', { feedId: item.id })
-          .andWhere('feedBookmark.userId = :userId', {
-            userId: user.id,
-          })
-          .getOne();
-        if (liked) {
-          item.bookmarkedYn = true;
-        } else {
-          item.bookmarkedYn = false;
-        }
-      }
+      await this.processFeedItem(user.id, item);
     }
 
-    return {
-      items: items,
-      totalCount: totalCount,
-      pageInfo: {
-        page,
-        limit,
-        isLast: page === lasPage ? true : false,
-      },
-    };
+    return generatePaginatedResponse(
+      items,
+      totalCount,
+      feedListDto.page,
+      feedListDto.limit,
+    );
   }
 
   /**
@@ -182,88 +108,30 @@ export class FeedRepository {
     user: User,
     feedListDto?: FeedListDto,
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
-    const page = feedListDto?.page;
-    const limit = feedListDto?.limit;
-    const offset = (page - 1) * limit;
-
     const feeds = this.feedRepository
       .createQueryBuilder('feed')
       .leftJoinAndSelect('feed.user', 'user')
-      .select([
-        'feed.id',
-        'feed.userId',
-        'feed.description',
-        'feed.status',
-        'feed.likeCount',
-        'feed.commentCount',
-        'feed.showLikeCountYn',
-        'feed.createdAt',
-        'feed.updatedAt',
-        'user.id',
-        'user.username',
-        'user.nickname',
-        'user.profileImage',
-      ])
       .where('feed.userId IN (:...userId)', {
         userId: [...user.followingIds, user.id],
       })
       .andWhere('user.delYn = :delYn', { delYn: YN.N })
       .andWhere('feed.displayYn = :displayYn', { displayYn: YN.Y })
       .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE })
-      .orderBy('feed.createdAt', 'DESC')
-      .offset(offset)
-      .limit(limit);
+      .orderBy('feed.createdAt', ORDER_BY_VALUE.DESC)
+      .Paginate(feedListDto);
 
     const [items, totalCount] = await feeds.getManyAndCount();
-    const lasPage = Math.ceil(totalCount / limit);
 
     for (const item of items) {
-      item.feedImages = await FeedImage.createQueryBuilder('feedImage')
-        .where('feedImage.feedId = :feedId', { feedId: item.id })
-        .getMany();
-
-      // * 좋아요 체크 여부
-      if (user.id) {
-        const liked = await FeedLike.createQueryBuilder('feedLike')
-          .where('feedLike.feedId = :feedId', { feedId: item.id })
-          .andWhere('feedLike.userId = :userId', {
-            userId: user.id,
-          })
-          .getOne();
-        if (liked) {
-          item.likedYn = true;
-        } else {
-          item.likedYn = false;
-        }
-      }
-
-      // * 북마크 체크 여부
-      if (user.id) {
-        const liked = await FeedBookmark.createQueryBuilder('feedBookmark')
-          .where('feedBookmark.feedId = :feedId', { feedId: item.id })
-          .andWhere('feedBookmark.userId = :userId', {
-            userId: user.id,
-          })
-          .getOne();
-        if (liked) {
-          item.bookmarkedYn = true;
-        } else {
-          item.bookmarkedYn = false;
-        }
-      }
-
-      // TODO: 좋아오 유저
+      await this.processFeedItem(user.id, item);
     }
 
-    return {
-      items: items,
-      totalCount: totalCount,
-      pageInfo: {
-        page,
-        limit,
-        isLast: page === lasPage ? true : false,
-      },
-    };
+    return generatePaginatedResponse(
+      items,
+      totalCount,
+      feedListDto.page,
+      feedListDto.limit,
+    );
   }
 
   /**
@@ -275,128 +143,91 @@ export class FeedRepository {
     userId: number,
     feedListDto?: FeedListDto,
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
-    const page = feedListDto?.page;
-    const limit = feedListDto?.limit;
-    const offset = (page - 1) * limit;
-
     const feeds = this.feedRepository
       .createQueryBuilder('feed')
       .leftJoinAndSelect('feed.user', 'user')
-      .select([
-        'feed.id',
-        'feed.userId',
-        'feed.description',
-        'feed.status',
-        'feed.likeCount',
-        'feed.commentCount',
-        'feed.showLikeCountYn',
-        'feed.createdAt',
-        'feed.updatedAt',
-        'user.id',
-        'user.username',
-        'user.nickname',
-        'user.profileImage',
-        'user.feedCount',
-      ])
       .where('feed.displayYn = :displayYn', { displayYn: YN.Y })
-      .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE })
+      .andWhere('feed.status = :status', { status: feedListDto.status })
       .andWhere('feed.userId = :userId', { userId: userId })
-      .orderBy('feed.createdAt', 'DESC')
-      .offset(offset)
-      .limit(limit);
+      .orderBy('feed.createdAt', ORDER_BY_VALUE.DESC)
+      .Paginate(feedListDto);
 
     const [items, totalCount] = await feeds.getManyAndCount();
-    const lasPage = Math.ceil(totalCount / limit);
 
     for (const item of items) {
-      item.feedImages = await FeedImage.createQueryBuilder('feedImage')
-        .where('feedImage.feedId = :feedId', { feedId: item.id })
-        .getMany();
+      await this.processFeedItem(userId, item);
     }
 
-    return {
-      items: items,
-      totalCount: totalCount,
-      pageInfo: {
-        page,
-        limit,
-        isLast: page === lasPage ? true : false,
-      },
-    };
+    return generatePaginatedResponse(
+      items,
+      totalCount,
+      feedListDto.page,
+      feedListDto.limit,
+    );
   }
 
   /**
-   * 유저별 피드 목록
+   * 유저별 북마크 피드 목록
    * @param userId
    * @returns
    */
   public async findAllByBookmark(
-    userId: number,
+    user: User,
     feedListDto?: FeedListDto,
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
-    const page = feedListDto?.page;
-    const limit = feedListDto?.limit;
-    const offset = (page - 1) * limit;
-
     const feeds = FeedBookmark.createQueryBuilder('feedBookmark')
       .leftJoinAndSelect('feedBookmark.feed', 'feed')
       .where('feed.displayYn = :displayYn', { displayYn: YN.Y })
       .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE })
-      .andWhere('feedBookmark.userId = :userId', { userId: userId })
+      .andWhere('feedBookmark.userId = :userId', { userId: user.id })
       .orderBy('feed.createdAt', ORDER_BY_VALUE.DESC)
-      .offset(offset)
-      .limit(limit);
+      .Paginate(feedListDto);
 
     const [items, totalCount] = await feeds.getManyAndCount();
-    const lasPage = Math.ceil(totalCount / limit);
 
     for (const item of items) {
-      item.feed.feedImages = await FeedImage.createQueryBuilder('feedImage')
-        .where('feedImage.feedId = :feedId', { feedId: item.feedId })
-        .getMany();
+      await this.processFeedItem(user.id, item.feed);
     }
 
-    return {
-      items: items.map((item) => item.feed),
-      totalCount: totalCount,
-      pageInfo: {
-        page,
-        limit,
-        isLast: page === lasPage ? true : false,
-      },
-    };
+    return generatePaginatedResponse(
+      items.map((item) => item.feed),
+      totalCount,
+      feedListDto.page,
+      feedListDto.limit,
+    );
   }
 
   /**
-   * 피드 상세
-   * @param id
+   * 피드 아이디로 찾기
+   * @param ID
    * @returns FeedFindOneVo
    */
-  public async findOneFeed(id: number): Promise<FeedFindOneVo> {
+  public async findOneFeed(feedId: number): Promise<FeedFindOneVo> {
     const feed = await this.feedRepository
       .createQueryBuilder('feed')
       .leftJoinAndSelect('feed.user', 'user')
-      .select([
-        'feed.id',
-        'feed.userId',
-        'feed.description',
-        'feed.status',
-        'feed.likeCount',
-        'feed.commentCount',
-        'feed.showLikeCountYn',
-        'feed.createdAt',
-        'feed.updatedAt',
-        'user.id',
-        'user.username',
-        'user.nickname',
-        'user.profileImage',
-      ])
-      .where('feed.id = :id', { id: id })
+      .where('feed.id = :id', { id: feedId })
       .getOne();
 
-    feed.feedImages = await FeedImage.createQueryBuilder('feedImage')
-      .where('feedImage.feedId = :feedId', { feedId: feed.id })
-      .getMany();
+    return feed;
+  }
+
+  /**
+   * 유저별 피드 상세
+   * @param id
+   * @returns FeedFindOneVo
+   */
+  public async findOneByUser(
+    user: User,
+    feedId: number,
+  ): Promise<FeedFindOneVo> {
+    const feed = await this.feedRepository
+      .createQueryBuilder('feed')
+      .leftJoinAndSelect('feed.user', 'user')
+      .where('feed.id = :id', { id: feedId })
+      .getOne();
+
+    await this.processFeedItem(user.id, feed);
 
     return feed;
   }
@@ -473,7 +304,11 @@ export class FeedRepository {
     return feed;
   }
 
-  /** 피드 좋아요 */
+  /**
+   * 피드 좋아요
+   * @param userId
+   * @param feedId
+   */
   public async likeFeed(userId: number, feedId: number) {
     await dataSource.transaction(async (transaction) => {
       let newLike = new FeedLike().set({
@@ -488,7 +323,11 @@ export class FeedRepository {
     });
   }
 
-  /** 피드 북마크 */
+  /**
+   * 피드 북마크
+   * @param userId
+   * @param feedId
+   */
   public async bookmarkFeed(userId: number, feedId: number) {
     await dataSource.transaction(async (transaction) => {
       let newLike = new FeedBookmark().set({
@@ -513,30 +352,9 @@ export class FeedRepository {
   ): Promise<FeedFindOneVo> {
     const feed = await dataSource.transaction(async (transaction) => {
       let feed = await this.findOneFeed(feedId);
-      // TODO: 기존 이미지 삭제하기
 
-      // TODO: 새로운 이미지 추가하기
-      // if (
-      //   feedUpdateDto.newFeedImages &&
-      //   feedUpdateDto.newFeedImages.length > 0
-      // ) {
-      //   await Promise.all(
-      //     feedUpdateDto.newFeedImages.map(async (image) => {
-      //       let newImage = new FeedImage().set({
-      //         feedId: feed.id,
-      //         image: image.image,
-      //         sortOrder: image.sortOrder,
-      //       });
-      //       newImage = await transaction.save(newImage);
-      //     }),
-      //   );
-      //   feedUpdateDto.feedImages = [
-      //     ...feedUpdateDto.feedImages,
-      //     ...feedUpdateDto.newFeedImages,
-      //   ];
-      // }
       feed.description = feedUpdateDto.description;
-      // feed.feedImages = feedUpdateDto.feedImages;
+
       feed.updatedAt = new Date();
       feed = await transaction.save(feed);
       return feed;
@@ -546,19 +364,123 @@ export class FeedRepository {
   }
 
   /**
-   *  피드 삭제
-   * @param userId
+   *  피드 상태 수정
+   * @param feedId
+   * @param feedUpdateDto
+   * @returns Feed
+   */
+  public async updateFeedStatus(
+    feedId: number,
+    feedUpdateStatusDto: FeedUpdateStatusDto,
+  ): Promise<FeedFindOneVo> {
+    const feed = await dataSource.transaction(async (transaction) => {
+      let feed = await this.findOneFeed(feedId);
+      feed.status = feedUpdateStatusDto.status;
+      feed = await transaction.save(feed);
+
+      let user = await this.userRepository.findOne({
+        where: {
+          id: feed.userId,
+        },
+      });
+      if (feed.status === FEED_STATUS.ACTIVE) {
+        user.feedCount++;
+      } else {
+        user.feedCount--;
+      }
+      user = await transaction.save(user);
+
+      return feed;
+    });
+
+    return feed;
+  }
+
+  /**
+   *  피드 좋아요 수 노출 상태 수정
+   * @param feedId
+   * @param feedUpdateDto
+   * @returns Feed
+   */
+  public async updateShowLikeCount(
+    feedId: number,
+    feedUpdateStatusDto: FeedUpdateStatusDto,
+  ): Promise<FeedFindOneVo> {
+    const feed = await dataSource.transaction(async (transaction) => {
+      let feed = await this.findOneFeed(feedId);
+      feed.showLikeCountYn = feedUpdateStatusDto.showLikeCountYn;
+      feed = await transaction.save(feed);
+      return feed;
+    });
+
+    return feed;
+  }
+
+  // DELETE
+
+  /**
+   *  피드 삭제 (FEED STATUS => DELETED)
    * @param feedId
    * @returns Feed
    */
-  public async deleteFeed(userId: number, feedId: number) {
+  public async deleteFeed(
+    userId: number,
+    feedId: number,
+  ): Promise<FeedFindOneVo> {
+    return await dataSource.transaction(async (transaction) => {
+      let feed = await this.feedRepository.findOne({
+        where: {
+          id: feedId,
+        },
+      });
+      feed.status = FEED_STATUS.DELETED;
+      feed = await transaction.save(feed);
+
+      // * USER FEED COUNT 감소
+      let user = await this.userRepository.findOne({
+        where: { id: userId },
+      });
+
+      user.feedCount--;
+      user = await transaction.save(user);
+
+      return feed;
+    });
+  }
+
+  /**
+   * 피드 영구 삭제
+   * @param userId
+   * @param feedId
+   */
+  public async hardDeleteFeed(userId: number, feedId: number) {
     await dataSource.transaction(async (transaction) => {
       // * FEED IMAGE 삭제
       await dataSource
         .createQueryBuilder()
         .delete()
         .from(FeedImage)
-        .where('feedId = :feedId', { feedId: feedId })
+        .where('feedId = :feedId', { feedId })
+        .execute();
+
+      // * FEED LIKE 삭제
+      await dataSource
+        .createQueryBuilder()
+        .delete()
+        .from(FeedLike)
+        .where('feedId = :feedId', {
+          feedId,
+        })
+        .execute();
+
+      // * FEED BOOKMARK 삭제
+      await dataSource
+        .createQueryBuilder()
+        .delete()
+        .from(FeedBookmark)
+        .where('feedId = :feedId', {
+          feedId,
+        })
         .execute();
 
       // * FEED 삭제
@@ -579,7 +501,11 @@ export class FeedRepository {
     });
   }
 
-  /** 피드 좋아요 해제 */
+  /**
+   *  피드 좋아요 해제
+   * @param userId
+   * @param feedId
+   */
   public async deleteLikeFeed(userId: number, feedId: number) {
     await dataSource.transaction(async (transaction) => {
       await dataSource
@@ -596,7 +522,11 @@ export class FeedRepository {
     });
   }
 
-  /** 피드 북마크 해제 */
+  /**
+   * 피드 북마크 해제
+   * @param userId
+   * @param feedId
+   */
   public async deleteBookmarkFeed(userId: number, feedId: number) {
     await dataSource
       .createQueryBuilder()
@@ -605,5 +535,63 @@ export class FeedRepository {
       .where('feedId = :feedId', { feedId: feedId })
       .andWhere('userId = :userId', { userId: userId })
       .execute();
+  }
+
+  private async processFeedItem(
+    userId: number,
+    item: Feed,
+  ): Promise<FeedFindOneVo> {
+    item.feedImages = await this.__get_feed_images(item.id);
+
+    // * 좋아요 체크 여부
+    if (userId) {
+      const isLiked = await this.__get_feed_like_by_user(userId, item.id);
+      item.likedYn = isLiked;
+    }
+
+    // * 북마크 체크 여부
+    if (userId) {
+      const isBookmarked = await this.__get_feed_bookmark_by_user(
+        userId,
+        item.id,
+      );
+      item.bookmarkedYn = isBookmarked;
+    }
+
+    return item;
+  }
+
+  private async __get_feed_images(feedId: number) {
+    const feedImages = await FeedImage.createQueryBuilder('feedImage')
+      .where('feedImage.feedId = :feedId', { feedId })
+      .getMany();
+    return feedImages;
+  }
+
+  private async __get_feed_like_by_user(
+    userId: number,
+    feedId: number,
+  ): Promise<boolean> {
+    const feedLike = await FeedLike.createQueryBuilder('feedLike')
+      .where('feedLike.feedId = :feedId', { feedId })
+      .andWhere('feedLike.userId = :userId', {
+        userId,
+      })
+      .getExists();
+
+    return feedLike === true ? true : false;
+  }
+
+  private async __get_feed_bookmark_by_user(
+    userId: number,
+    feedId: number,
+  ): Promise<boolean> {
+    const feedBookmark = await FeedBookmark.createQueryBuilder('feedBookmark')
+      .where('feedBookmark.feedId = :feedId', { feedId })
+      .andWhere('feedBookmark.userId = :userId', {
+        userId,
+      })
+      .getExists();
+    return feedBookmark === true ? true : false;
   }
 }
