@@ -16,7 +16,7 @@ import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { AuthLoginDto, ChangePasswordDto } from './dto';
 import { AuthTokenVo } from './vo/auth-token.vo';
 import { UserLoginHistory } from '../user-login-history/user-login-history.entity';
-import { USER_LOGIN, YN } from 'src/common';
+import { RESPONSE_STATUS, USER_LOGIN, YN } from 'src/common';
 import { UserLoginHistoryRepository } from '../user-login-history/user-login-history.repository';
 import { UserFindOneVo } from '../user/vo';
 
@@ -93,29 +93,38 @@ export class AuthService {
    * @returns AuthTokenVo
    */
   public async refreshUserToken(token: string): Promise<AuthTokenVo> {
-    if (!token) throw new UnauthorizedException();
-    const verifiedToken = this.jwtService.verify(token, {
-      secret: process.env.REFRESH_JWT_SECRET_KEY,
-    }) as UserPayload;
+    try {
+      if (!token) throw new UnauthorizedException();
+      const verifiedToken = this.jwtService.verify(token, {
+        secret: process.env.REFRESH_JWT_SECRET_KEY,
+      }) as UserPayload;
 
-    const user = await this.userRepository.findUserByEmail(verifiedToken.email);
-    // 여기서 사업 로직 녹여도 됨.
-    // 예를 들어 케시 존재 다시 확인하거나, 아니면 상태 값 확인해서 차단된 유저인지
+      const user = await this.userRepository.findUserByEmail(
+        verifiedToken.email,
+      );
+      // 여기서 사업 로직 녹여도 됨.
+      // 예를 들어 케시 존재 다시 확인하거나, 아니면 상태 값 확인해서 차단된 유저인지
 
-    // 케시 확인
-    const cacheKey = `${cacheConvention.user.refreshToken}${user.id}`;
-    const cache = await this.redis.get(cacheKey);
-    if (!cache) throw new UnauthorizedException();
+      // 케시 확인
+      const cacheKey = `${cacheConvention.user.refreshToken}${user.id}`;
+      const cache = await this.redis.get(cacheKey);
+      if (!cache) throw new UnauthorizedException();
 
-    // 새로운 토큰들 발급받기
-    const newAccessToken = await this._sign_in_access_token(user);
-    const newRefToken = await this._sign_in_refresh_token(user);
-    const response = new AuthTokenVo({
-      accessToken: newAccessToken,
-      refreshToken: newRefToken,
-    });
+      // 새로운 토큰들 발급받기
+      const newAccessToken = await this._sign_in_access_token(user);
+      const newRefToken = await this._sign_in_refresh_token(user);
+      const response = new AuthTokenVo({
+        accessToken: newAccessToken,
+        refreshToken: newRefToken,
+      });
 
-    return response;
+      return response;
+    } catch (error) {
+      throw new UnauthorizedException({
+        error: RESPONSE_STATUS.NO_REFRESH_TOKEN,
+        msg: 'Refresh token expired.',
+      });
+    }
   }
 
   /**
