@@ -27,6 +27,27 @@ export class FeedService {
     return feeds;
   }
 
+  public async findAllByTag(
+    user: User,
+    feedListDto?: FeedListDto,
+  ): Promise<PaginateResponseVo<FeedFindOneVo>> {
+    const feeds = await this.feedRepository.findAllByTag(user, feedListDto);
+    if (!feeds) throw new NotFoundException();
+    return feeds;
+  }
+
+  public async findAllByFollowing(
+    user: User,
+    feedListDto?: FeedListDto,
+  ): Promise<PaginateResponseVo<FeedFindOneVo>> {
+    const feeds = await this.feedRepository.findAllByFollowing(
+      user,
+      feedListDto,
+    );
+    if (!feeds) throw new NotFoundException();
+    return feeds;
+  }
+
   public async findAllByUser(
     username: string,
     feedListDto?: FeedListDto,

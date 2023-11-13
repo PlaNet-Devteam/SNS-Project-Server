@@ -1,9 +1,18 @@
 import { IsEnum, IsNotEmpty } from 'class-validator';
 import { FEED_STATUS, YN } from 'src/common';
 import { BaseUpdateEntity } from 'src/core';
-import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
 import { User } from '../user/user.entity';
 import { FeedImage } from '../feed-image/feed-image.entity';
+import { Tag } from '../tag/tag.entity';
 
 @Entity({ name: 'feed' })
 export class Feed extends BaseUpdateEntity<Feed> {
@@ -58,6 +67,18 @@ export class Feed extends BaseUpdateEntity<Feed> {
 
   @OneToMany((type) => FeedImage, (feedImages) => feedImages.feed)
   feedImages?: FeedImage[];
+
+  @ManyToMany((type) => Tag, (tag) => tag.feeds)
+  @JoinTable({
+    name: 'mapper_feed_tag',
+    joinColumn: {
+      name: 'feed_id',
+    },
+    inverseJoinColumn: {
+      name: 'tag_id',
+    },
+  })
+  tags?: Tag[];
 
   // no database
   likedYn?: boolean;

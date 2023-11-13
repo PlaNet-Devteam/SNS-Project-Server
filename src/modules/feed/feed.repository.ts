@@ -6,7 +6,7 @@ import { FeedFindOneVo } from './vo';
 import { FEED_STATUS, ORDER_BY_VALUE, YN } from 'src/common';
 import { FeedCreateDto, FeedListDto, FeedUpdateDto } from './dto';
 import { FeedImage } from '../feed-image/feed-image.entity';
-import { BaseResponseVo, PaginateResponseVo } from 'src/core';
+import { PaginateResponseVo } from 'src/core';
 import { User } from '../user/user.entity';
 import { FeedLike } from '../feed-like/feed-like.entity';
 import { FeedBookmark } from '../feed-bookmark/feed-bookmark.entity';
@@ -25,10 +25,160 @@ export class FeedRepository {
   // SELECTS
 
   /**
-   * 전체 피드 목록 (내가 작성한 피드 및 내가 팔로잉한 유저의 피드)
+   * 전체 피드 목록
    * @returns
    */
   public async findAll(
+    user: User,
+    feedListDto?: FeedListDto,
+  ): Promise<PaginateResponseVo<FeedFindOneVo>> {
+    const page = feedListDto?.page;
+    const limit = feedListDto?.limit;
+    const offset = (page - 1) * limit;
+
+    const feeds = this.feedRepository
+      .createQueryBuilder('feed')
+      .leftJoinAndSelect('feed.user', 'user')
+      .where('user.delYn = :delYn', { delYn: YN.N })
+      .andWhere('feed.displayYn = :displayYn', { displayYn: YN.Y })
+      .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE })
+      .orderBy('feed.createdAt', 'DESC')
+      .offset(offset)
+      .limit(limit);
+
+    const [items, totalCount] = await feeds.getManyAndCount();
+    const lasPage = Math.ceil(totalCount / limit);
+
+    for (const item of items) {
+      item.feedImages = await FeedImage.createQueryBuilder('feedImage')
+        .where('feedImage.feedId = :feedId', { feedId: item.id })
+        .getMany();
+
+      // * 좋아요 체크 여부
+      if (user.id) {
+        const liked = await FeedLike.createQueryBuilder('feedLike')
+          .where('feedLike.feedId = :feedId', { feedId: item.id })
+          .andWhere('feedLike.userId = :userId', {
+            userId: user.id,
+          })
+          .getOne();
+        if (liked) {
+          item.likedYn = true;
+        } else {
+          item.likedYn = false;
+        }
+      }
+
+      // * 북마크 체크 여부
+      if (user.id) {
+        const liked = await FeedBookmark.createQueryBuilder('feedBookmark')
+          .where('feedBookmark.feedId = :feedId', { feedId: item.id })
+          .andWhere('feedBookmark.userId = :userId', {
+            userId: user.id,
+          })
+          .getOne();
+        if (liked) {
+          item.bookmarkedYn = true;
+        } else {
+          item.bookmarkedYn = false;
+        }
+      }
+    }
+
+    return {
+      items: items,
+      totalCount: totalCount,
+      pageInfo: {
+        page,
+        limit,
+        isLast: page === lasPage ? true : false,
+      },
+    };
+  }
+
+  /**
+   * 태그별 피드 목록
+   * @returns
+   */
+  public async findAllByTag(
+    user: User,
+    feedListDto?: FeedListDto,
+  ): Promise<PaginateResponseVo<FeedFindOneVo>> {
+    const page = feedListDto?.page;
+    const limit = feedListDto?.limit;
+    const offset = (page - 1) * limit;
+
+    const feeds = this.feedRepository
+      .createQueryBuilder('feed')
+      .innerJoinAndSelect('feed.user', 'user')
+      .leftJoinAndSelect('feed.tags', 'tags')
+      .where('user.delYn = :delYn', { delYn: YN.N })
+      .andWhere('feed.displayYn = :displayYn', { displayYn: YN.Y })
+      .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE })
+      .orderBy('feed.createdAt', 'DESC');
+
+    const filteredFeeds: Feed[] = (await feeds.getMany()).filter((feed) =>
+      feed.tags.some((tag) => tag.tagName === feedListDto.tagName),
+    );
+
+    const paginatedFeeds = filteredFeeds.slice(offset, offset + limit);
+
+    const [items, totalCount] = [paginatedFeeds, filteredFeeds.length];
+
+    const lasPage = Math.ceil(totalCount / limit);
+
+    for (const item of filteredFeeds) {
+      item.feedImages = await FeedImage.createQueryBuilder('feedImage')
+        .where('feedImage.feedId = :feedId', { feedId: item.id })
+        .getMany();
+
+      // * 좋아요 체크 여부
+      if (user.id) {
+        const liked = await FeedLike.createQueryBuilder('feedLike')
+          .where('feedLike.feedId = :feedId', { feedId: item.id })
+          .andWhere('feedLike.userId = :userId', {
+            userId: user.id,
+          })
+          .getOne();
+        if (liked) {
+          item.likedYn = true;
+        } else {
+          item.likedYn = false;
+        }
+      }
+
+      // * 북마크 체크 여부
+      if (user.id) {
+        const liked = await FeedBookmark.createQueryBuilder('feedBookmark')
+          .where('feedBookmark.feedId = :feedId', { feedId: item.id })
+          .andWhere('feedBookmark.userId = :userId', {
+            userId: user.id,
+          })
+          .getOne();
+        if (liked) {
+          item.bookmarkedYn = true;
+        } else {
+          item.bookmarkedYn = false;
+        }
+      }
+    }
+
+    return {
+      items: items,
+      totalCount: totalCount,
+      pageInfo: {
+        page,
+        limit,
+        isLast: page === lasPage ? true : false,
+      },
+    };
+  }
+
+  /**
+   * 전체 피드 목록 (내가 작성한 피드 및 내가 팔로잉한 유저의 피드)
+   * @returns
+   */
+  public async findAllByFollowing(
     user: User,
     feedListDto?: FeedListDto,
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
