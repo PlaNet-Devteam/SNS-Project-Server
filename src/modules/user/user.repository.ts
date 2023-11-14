@@ -54,6 +54,7 @@ export class UserRepository {
           });
         }),
       )
+      .andWhere('user.id != :userId', { userId: userListDto.viewerId })
       .andWhere('user.delYn = :delYn', { delYn: YN.N })
       .orderBy('user.createdAt', ORDER_BY_VALUE.ASC)
       .offset(offset)
