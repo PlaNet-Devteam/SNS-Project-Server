@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { FeedRepository } from './feed.repository';
 import { FeedFindOneVo } from './vo';
 import { UserRepository } from '../user/user.repository';
@@ -12,6 +12,7 @@ import { Feed } from './feed.entity';
 import { PaginateResponseVo } from 'src/core';
 import { User } from '../user/user.entity';
 import { UserBlockRepository } from '../user-block/user-block.repository';
+import { FeedLikeRepository } from '../feed-like/feed-like.repository';
 
 @Injectable()
 export class FeedService {
@@ -19,6 +20,7 @@ export class FeedService {
     private readonly feedRepository: FeedRepository,
     private readonly userRepository: UserRepository,
     private readonly userBlockRepository: UserBlockRepository,
+    private readonly feedLikeRepository: FeedLikeRepository,
   ) {}
 
   // GET SERVICES
@@ -123,6 +125,10 @@ export class FeedService {
   public async likeFeed(userId: number, feedId: number) {
     const feed = await this.feedRepository.findOneFeed(feedId);
     if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+
+    const like = await this.feedLikeRepository.findOne(userId, feedId);
+    if (like) throw new NotFoundException('잘못된 요청입니다 - 좋아요 실패');
+
     return await this.feedRepository.likeFeed(userId, feedId);
   }
 
@@ -196,6 +202,11 @@ export class FeedService {
   public async deleteLikeFeed(userId: number, feedId: number) {
     const feed = await this.feedRepository.findOneFeed(feedId);
     if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+
+    const like = await this.feedLikeRepository.findOne(userId, feedId);
+    if (!like)
+      throw new NotFoundException('잘못된 요청입니다 - 좋아요 해제 실패');
+
     return await this.feedRepository.deleteLikeFeed(userId, feedId);
   }
 

@@ -7,9 +7,10 @@ import { FeedController } from './feed.controller';
 import { UserModule } from '../user/user.module';
 import { userProviders } from '../user/user.provider';
 import { UserBlockModule } from '../user-block/user-block.module';
+import { FeedLikeModule } from '../feed-like/feed-like.module';
 
 @Module({
-  imports: [DatabaseModule, UserModule, UserBlockModule],
+  imports: [DatabaseModule, UserModule, UserBlockModule, FeedLikeModule],
   controllers: [FeedController],
   providers: [...userProviders, ...feedProviders, FeedRepository, FeedService],
   exports: [FeedModule, FeedRepository, FeedService],
