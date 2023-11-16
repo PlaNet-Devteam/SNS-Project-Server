@@ -585,6 +585,23 @@ export class FeedRepository {
   }
 
   /**
+   *  피드 이미지 삭제
+   * @param feedId
+   * @returns Feed
+   */
+  public async deleteFeedImage(feedId: number, sortOrder: number) {
+    await dataSource.transaction(async (transaction) => {
+      await dataSource
+        .createQueryBuilder()
+        .delete()
+        .from(FeedImage)
+        .where('feedId = :feedId', { feedId })
+        .andWhere('sortOrder = :sortOrder', { sortOrder })
+        .execute();
+    });
+  }
+
+  /**
    *  피드 좋아요 해제
    * @param userId
    * @param feedId

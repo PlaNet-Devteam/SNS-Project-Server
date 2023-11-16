@@ -199,6 +199,16 @@ export class FeedService {
     return await this.feedRepository.deleteFeed(userId, feedId);
   }
 
+  /**
+   * 피드 이미지 삭제
+   * @param userId
+   */
+  public async deleteFeedImage(feedId: number, sortOrder: number) {
+    const feed = await this.feedRepository.findOneFeed(feedId);
+    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    return await this.feedRepository.deleteFeedImage(feedId, sortOrder);
+  }
+
   public async deleteLikeFeed(userId: number, feedId: number) {
     const feed = await this.feedRepository.findOneFeed(feedId);
     if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
