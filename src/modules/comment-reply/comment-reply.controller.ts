@@ -39,7 +39,6 @@ export class CommentReplyController {
     @Param('id', ParseIntPipe) commentId: number,
     @Query() commentReplyListDto: CommentReplyListDto,
   ): Promise<BaseResponseVo<PaginateResponseVo<CommentReplyFindOneVo>>> {
-    console.log('commentReplyListDto', commentReplyListDto);
     return new BaseResponseVo<PaginateResponseVo<CommentReplyFindOneVo>>(
       await this.commentReplySerivce.findAll(commentId, commentReplyListDto),
     );

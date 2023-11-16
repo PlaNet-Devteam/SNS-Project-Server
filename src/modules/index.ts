@@ -3,6 +3,7 @@
 export * from './auth/auth.module';
 export * from './user/user.module';
 export * from './feed/feed.module';
+export * from './feed-like/feed-like.module';
 export * from './user-block/user-block.module';
 export * from './comment/comment.module';
 export * from './comment-reply/comment-reply.module';

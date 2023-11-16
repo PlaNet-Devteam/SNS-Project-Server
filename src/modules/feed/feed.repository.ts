@@ -25,6 +25,8 @@ export class FeedRepository {
     private readonly feedRepository: Repository<Feed>,
     @Inject(DB_CONST_REPOSITORY.USER)
     private readonly userRepository: Repository<User>,
+    @Inject(DB_CONST_REPOSITORY.TAG)
+    private readonly tagRepository: Repository<Tag>,
   ) {}
 
   // SELECTS
@@ -49,7 +51,7 @@ export class FeedRepository {
     const [items, totalCount] = await feeds.getManyAndCount();
 
     for (const item of items) {
-      await this.processFeedItem(user.id, item);
+      await this.processFeedItem(item, user.id);
     }
 
     return generatePaginatedResponse(
@@ -89,9 +91,8 @@ export class FeedRepository {
     const [items, totalCount] = [paginatedFeeds, filteredFeeds.length];
 
     for (const item of filteredFeeds) {
-      await this.processFeedItem(user.id, item);
+      await this.processFeedItem(item, user.id);
     }
-
     return generatePaginatedResponse(
       items,
       totalCount,
@@ -123,7 +124,7 @@ export class FeedRepository {
     const [items, totalCount] = await feeds.getManyAndCount();
 
     for (const item of items) {
-      await this.processFeedItem(user.id, item);
+      await this.processFeedItem(item, user.id);
     }
 
     return generatePaginatedResponse(
@@ -155,7 +156,7 @@ export class FeedRepository {
     const [items, totalCount] = await feeds.getManyAndCount();
 
     for (const item of items) {
-      await this.processFeedItem(userId, item);
+      await this.processFeedItem(item, userId);
     }
 
     return generatePaginatedResponse(
@@ -186,7 +187,7 @@ export class FeedRepository {
     const [items, totalCount] = await feeds.getManyAndCount();
 
     for (const item of items) {
-      await this.processFeedItem(user.id, item.feed);
+      await this.processFeedItem(item.feed, user.id);
     }
 
     return generatePaginatedResponse(
@@ -209,6 +210,8 @@ export class FeedRepository {
       .where('feed.id = :id', { id: feedId })
       .getOne();
 
+    await this.processFeedItem(feed);
+
     return feed;
   }
 
@@ -227,7 +230,7 @@ export class FeedRepository {
       .where('feed.id = :id', { id: feedId })
       .getOne();
 
-    await this.processFeedItem(user.id, feed);
+    await this.processFeedItem(feed, user.id);
 
     return feed;
   }
@@ -274,7 +277,7 @@ export class FeedRepository {
         await Promise.all(
           feedCreateDto.tagNames.map(async (tagName) => {
             // * Tag 테이블에서 해당 태그 검색
-            let tag = await Tag.findOne({
+            let tag = await this.tagRepository.findOne({
               where: {
                 tagName,
               },
@@ -351,10 +354,90 @@ export class FeedRepository {
     feedUpdateDto: FeedUpdateDto,
   ): Promise<FeedFindOneVo> {
     const feed = await dataSource.transaction(async (transaction) => {
-      let feed = await this.findOneFeed(feedId);
+      let feed = await this.feedRepository.findOne({ where: { id: feedId } });
+
+      // * 태그가 존재 하지 않는 경우
+      if (feedUpdateDto.tagNames.length === 0) {
+        await dataSource
+          .createQueryBuilder()
+          .delete()
+          .from(MapperFeedTag)
+          .where('feedId = :feedId', { feedId: feedId })
+          .execute();
+      }
+
+      // * tagNames 배열 체크 후 FEED TAG MAPPER 테이블 생성
+      if (feedUpdateDto.tagNames && feedUpdateDto.tagNames.length > 0) {
+        await Promise.all(
+          feedUpdateDto.tagNames.map(async (tagName) => {
+            // * Tag 테이블에서 해당 태그 검색
+            let tag = await this.tagRepository.findOne({
+              where: {
+                tagName,
+              },
+            });
+
+            //* 존재하는 태그 가 없을 경우 TAG 테이블에 새로 생성
+            if (!tag) {
+              tag = new Tag({
+                tagName,
+              });
+              tag = await transaction.save(tag);
+            }
+
+            //* MAPPER가 없을 경우 FEED ID 와 TAG ID MAPPER 생성
+            const mapper = await MapperFeedTag.findOne({
+              where: {
+                tagId: tag.id,
+                feedId: feedId,
+              },
+            });
+
+            if (!mapper) {
+              const newMapper = new MapperFeedTag({
+                feedId: feed.id,
+                tagId: tag.id,
+              });
+              await transaction.save(newMapper);
+            }
+
+            const feedTags = (await this.findOneFeed(feedId)).tags;
+
+            // * 기존 태그가 삭제된 경우 FEED ID 와 TAG ID MAPPER 삭제
+            const prevTags = new Set(feedTags.map((tag) => tag.tagName));
+            const currentTags = new Set(feedUpdateDto.tagNames);
+            const deletedTags = [...prevTags].filter(
+              (tag) => !currentTags.has(tag),
+            );
+
+            if (deletedTags.length > 0) {
+              await Promise.all(
+                deletedTags.map(async (tagName) => {
+                  const deleteTag = await this.tagRepository.findOne({
+                    where: {
+                      tagName,
+                    },
+                  });
+
+                  if (deleteTag && deleteTag.id) {
+                    await dataSource
+                      .createQueryBuilder()
+                      .delete()
+                      .from(MapperFeedTag)
+                      .where('feedId = :feedId', { feedId })
+                      .andWhere('tagId = :tagId', {
+                        tagId: deleteTag.id,
+                      })
+                      .execute();
+                  }
+                }),
+              );
+            }
+          }),
+        );
+      }
 
       feed.description = feedUpdateDto.description;
-
       feed.updatedAt = new Date();
       feed = await transaction.save(feed);
       return feed;
@@ -502,6 +585,23 @@ export class FeedRepository {
   }
 
   /**
+   *  피드 이미지 삭제
+   * @param feedId
+   * @returns Feed
+   */
+  public async deleteFeedImage(feedId: number, sortOrder: number) {
+    await dataSource.transaction(async (transaction) => {
+      await dataSource
+        .createQueryBuilder()
+        .delete()
+        .from(FeedImage)
+        .where('feedId = :feedId', { feedId })
+        .andWhere('sortOrder = :sortOrder', { sortOrder })
+        .execute();
+    });
+  }
+
+  /**
    *  피드 좋아요 해제
    * @param userId
    * @param feedId
@@ -538,10 +638,11 @@ export class FeedRepository {
   }
 
   private async processFeedItem(
-    userId: number,
     item: Feed,
+    userId?: number,
   ): Promise<FeedFindOneVo> {
     item.feedImages = await this.__get_feed_images(item.id);
+    item.tags = await this.__get_feed_tags(item.id);
 
     // * 좋아요 체크 여부
     if (userId) {
@@ -559,6 +660,22 @@ export class FeedRepository {
     }
 
     return item;
+  }
+
+  private async __get_feed_tags(feedId: number) {
+    const feedTags = await MapperFeedTag.createQueryBuilder('mapperFeedTag')
+      .where('mapperFeedTag.feedId = :feedId', { feedId })
+      .getMany();
+    const tagIds = feedTags.map((tag) => tag.tagId);
+    const tagNames = await Promise.all(
+      tagIds.map(async (tagId) => {
+        const result = await this.tagRepository.findOne({
+          where: { id: tagId },
+        });
+        return result;
+      }),
+    );
+    return tagNames;
   }
 
   private async __get_feed_images(feedId: number) {

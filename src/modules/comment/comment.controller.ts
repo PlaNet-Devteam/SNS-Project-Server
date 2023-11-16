@@ -35,7 +35,6 @@ export class CommentController {
     @Param('id', ParseIntPipe) feedId: number,
     @Query() commentListDto: CommentListDto,
   ): Promise<BaseResponseVo<PaginateResponseVo<CommentFindOneVo>>> {
-    console.log('commentListDto', commentListDto);
     return new BaseResponseVo<PaginateResponseVo<CommentFindOneVo>>(
       await this.commentSerivce.findAll(feedId, commentListDto),
     );

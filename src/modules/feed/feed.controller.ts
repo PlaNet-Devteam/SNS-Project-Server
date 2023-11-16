@@ -237,6 +237,22 @@ export class FeedController {
   }
 
   /**
+   * 피드 이미지 삭제
+   * @param user
+   * @param id
+   * @returns
+   */
+  @Delete('/feed/:id([0-9]+)/image/:sortOrder([0-9]+)')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(new UserGuard())
+  public async deleteFeedImage(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('sortOrder', ParseIntPipe) sortOrder: number,
+  ) {
+    return await this.feedService.deleteFeedImage(id, sortOrder);
+  }
+
+  /**
    * 피드 좋아요 해제
    * @param user
    * @param id

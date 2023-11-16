@@ -27,4 +27,9 @@ export class FeedUpdateDto
   @IsOptional()
   @Expose()
   newFeedImages?: FeedImage[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Expose()
+  tagNames?: string[];
 }
