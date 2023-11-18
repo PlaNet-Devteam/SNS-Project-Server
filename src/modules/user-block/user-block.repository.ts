@@ -101,7 +101,7 @@ export class UserBlockRepository {
    */
   public async deleteUserBlock(userBlockCreateDto: UserBlockCreateDto) {
     await dataSource.transaction(async (transaction) => {
-      await dataSource
+      await transaction
         .createQueryBuilder()
         .delete()
         .from(UserBlock)

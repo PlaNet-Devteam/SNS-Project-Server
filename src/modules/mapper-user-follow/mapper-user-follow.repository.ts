@@ -172,7 +172,7 @@ export class MapperUserFollowRepository {
     mapperUserFollowDeleteDto: MapperUserFollowDeleteDto,
   ) {
     await dataSource.transaction(async (transaction) => {
-      await dataSource
+      await transaction
         .createQueryBuilder()
         .delete()
         .from(MapperUserFollow)

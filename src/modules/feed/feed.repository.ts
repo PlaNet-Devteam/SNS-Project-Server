@@ -358,7 +358,7 @@ export class FeedRepository {
 
       // * 태그가 존재 하지 않는 경우
       if (feedUpdateDto.tagNames.length === 0) {
-        await dataSource
+        await transaction
           .createQueryBuilder()
           .delete()
           .from(MapperFeedTag)
@@ -420,7 +420,7 @@ export class FeedRepository {
                   });
 
                   if (deleteTag && deleteTag.id) {
-                    await dataSource
+                    await transaction
                       .createQueryBuilder()
                       .delete()
                       .from(MapperFeedTag)
@@ -539,7 +539,7 @@ export class FeedRepository {
   public async hardDeleteFeed(userId: number, feedId: number) {
     await dataSource.transaction(async (transaction) => {
       // * FEED IMAGE 삭제
-      await dataSource
+      await transaction
         .createQueryBuilder()
         .delete()
         .from(FeedImage)
@@ -547,7 +547,7 @@ export class FeedRepository {
         .execute();
 
       // * FEED LIKE 삭제
-      await dataSource
+      await transaction
         .createQueryBuilder()
         .delete()
         .from(FeedLike)
@@ -557,7 +557,7 @@ export class FeedRepository {
         .execute();
 
       // * FEED BOOKMARK 삭제
-      await dataSource
+      await transaction
         .createQueryBuilder()
         .delete()
         .from(FeedBookmark)
@@ -567,7 +567,7 @@ export class FeedRepository {
         .execute();
 
       // * FEED 삭제
-      await dataSource
+      await transaction
         .createQueryBuilder()
         .delete()
         .from(Feed)
@@ -591,7 +591,7 @@ export class FeedRepository {
    */
   public async deleteFeedImage(feedId: number, sortOrder: number) {
     await dataSource.transaction(async (transaction) => {
-      await dataSource
+      await transaction
         .createQueryBuilder()
         .delete()
         .from(FeedImage)
@@ -608,7 +608,7 @@ export class FeedRepository {
    */
   public async deleteLikeFeed(userId: number, feedId: number) {
     await dataSource.transaction(async (transaction) => {
-      await dataSource
+      await transaction
         .createQueryBuilder()
         .delete()
         .from(FeedLike)
@@ -628,13 +628,15 @@ export class FeedRepository {
    * @param feedId
    */
   public async deleteBookmarkFeed(userId: number, feedId: number) {
-    await dataSource
-      .createQueryBuilder()
-      .delete()
-      .from(FeedBookmark)
-      .where('feedId = :feedId', { feedId: feedId })
-      .andWhere('userId = :userId', { userId: userId })
-      .execute();
+    await dataSource.transaction(async (transaction) => {
+      await transaction
+        .createQueryBuilder()
+        .delete()
+        .from(FeedBookmark)
+        .where('feedId = :feedId', { feedId: feedId })
+        .andWhere('userId = :userId', { userId: userId })
+        .execute();
+    });
   }
 
   private async processFeedItem(
