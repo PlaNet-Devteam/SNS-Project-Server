@@ -71,8 +71,8 @@ export class FeedService {
     if (feedListDto.viewerId) {
       // * 차단 여부 체크 => 차단된 유저의 피드 빈배열 반환
       const isBlocked = await this.userBlockRepository.checkIsBlocked(
-        user.id,
         feedListDto.viewerId,
+        user.id,
       );
 
       if (isBlocked) return new PaginateResponseVo<FeedFindOneVo>();

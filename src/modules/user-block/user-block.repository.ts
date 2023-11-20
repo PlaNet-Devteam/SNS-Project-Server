@@ -109,21 +109,24 @@ export class UserBlockRepository {
   }
 
   /**
-   * 차단된 유저인지 체크
+   * 차단된 유저인지 체크 (내가 차단한 유저)
    * @param userId
    * @param viewerId
    * @returns
    */
   public async checkIsBlocked(
     userId: number,
-    viewerId: number,
+    blockedUserId: number,
   ): Promise<boolean> {
     const isBlocked = await this.userBlockRepository
       .createQueryBuilder('userBlock')
-      .where('userBlock.blockedUserId = :blockedUserId', {
-        blockedUserId: userId,
+      .where('userBlock.userId = :userId', { userId: userId })
+      .andWhere('userBlock.blockedUserId = :blockedUserId', {
+        blockedUserId: blockedUserId,
       })
-      .andWhere('userBlock.userId = :userId', { userId: viewerId })
+      .andWhere('userBlock.actionType = :actionType', {
+        actionType: USER_BLOCK.BLOCKER,
+      })
       .getExists();
     return isBlocked;
   }
@@ -159,6 +162,22 @@ export class UserBlockRepository {
         .where('userId = :userId', { userId: userBlockCreateDto.userId })
         .andWhere('blockedUserId = :blockedUserId', {
           blockedUserId: userBlockCreateDto.blockedUserId,
+        })
+        .andWhere('actionType = :actionType', {
+          actionType: USER_BLOCK.BLOCKER,
+        })
+        .execute();
+
+      await transaction
+        .createQueryBuilder()
+        .delete()
+        .from(UserBlock)
+        .where('userId = :userId', { userId: userBlockCreateDto.blockedUserId })
+        .andWhere('blockedUserId = :blockedUserId', {
+          blockedUserId: userBlockCreateDto.userId,
+        })
+        .andWhere('actionType = :actionType', {
+          actionType: USER_BLOCK.BLOCKED,
         })
         .execute();
     });

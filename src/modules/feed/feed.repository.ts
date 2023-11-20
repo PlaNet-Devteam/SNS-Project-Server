@@ -49,7 +49,7 @@ export class FeedRepository {
 
     if (excludeUserIds.length > 0) {
       feeds.andWhere('user.id NOT IN (:...userId)', {
-        userId: [excludeUserIds],
+        userId: [...excludeUserIds],
       });
     }
 
