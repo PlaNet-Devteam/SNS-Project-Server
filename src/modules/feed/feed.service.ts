@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { FeedRepository } from './feed.repository';
 import { FeedFindOneVo } from './vo';
 import { UserRepository } from '../user/user.repository';
@@ -33,16 +33,17 @@ export class FeedService {
     const blockerUsers = await this.userBlockRepository.findAllByBlockerIds(
       feedListDto.viewerId,
     );
-    const blockedUsers = await this.userBlockRepository.findAllByBlockedIds(
+    const blockedMeUsers = await this.userBlockRepository.findAllByBlockedIds(
       feedListDto.viewerId,
     );
-    const excludeUserIds = [...blockerUsers, ...blockedUsers];
+    const excludeUserIds = [...blockerUsers, ...blockedMeUsers];
 
     const feeds = await this.feedRepository.findAll(
       user,
       feedListDto,
       excludeUserIds,
     );
+
     if (!feeds) throw new NotFoundException();
 
     return feeds;

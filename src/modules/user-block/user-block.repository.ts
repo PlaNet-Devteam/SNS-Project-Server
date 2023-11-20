@@ -52,7 +52,7 @@ export class UserBlockRepository {
   }
 
   /**
-   * 나를 차단한 유저 ID 배열
+   * 내가 차단한 유저 ID 배열
    * @param userId
    * @returns
    */

@@ -40,22 +40,11 @@ export class UserRepository {
    */
   public async findAll(
     userListDto?: UserListDto,
+    excludeUserIds?: number[],
   ): Promise<PaginateResponseVo<UserFindOneVo>> {
     const page = userListDto?.page;
     const limit = userListDto?.limit;
     const offset = (page - 1) * limit;
-
-    // * 나를 차단한 유저 검색 제외
-    const blockedMeUsers = await UserBlock.createQueryBuilder('userBlock')
-      .where('userBlock.userId = :userId', {
-        userId: userListDto.viewerId,
-      })
-      .andWhere('userBlock.actionType = :actionType', {
-        actionType: USER_BLOCK.BLOCKED,
-      })
-      .getMany();
-
-    const blockedMeUserIds = blockedMeUsers.map((user) => user.blockedUserId);
 
     const users = this.userRepository
       .createQueryBuilder('user')
@@ -67,7 +56,7 @@ export class UserRepository {
         }),
       )
       .andWhere('user.id NOT IN (:...userId)', {
-        userId: [userListDto.viewerId, ...blockedMeUserIds],
+        userId: [userListDto.viewerId, ...excludeUserIds],
       })
       .andWhere('user.delYn = :delYn', { delYn: YN.N })
       .orderBy('user.createdAt', ORDER_BY_VALUE.ASC)
