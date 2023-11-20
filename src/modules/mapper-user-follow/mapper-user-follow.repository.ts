@@ -10,7 +10,6 @@ import { MapperUserFollow } from './mapper-user-follow.entity';
 import { User } from '../user/user.entity';
 import { PaginateResponseVo } from 'src/core';
 import { YN } from 'src/common';
-import { FollowFindOneVo } from './vo';
 import { UserFindOneVo } from '../user/vo';
 
 @Injectable()
@@ -30,16 +29,18 @@ export class MapperUserFollowRepository {
    * @returns
    */
   async findAllByFollowings(
-    userId: number,
+    userId: number, // 본인 아이디
+    followId: number,
     mapperUserfollowListDto: MapperUserFollowListDto,
+    excludeUserIds?: number[],
   ): Promise<PaginateResponseVo<UserFindOneVo>> {
     const page = mapperUserfollowListDto.page;
     const limit = mapperUserfollowListDto.limit;
     const offset = (page - 1) * limit;
 
-    const user = this.mapperUserFollowRepository
+    const users = this.mapperUserFollowRepository
       .createQueryBuilder('mapper')
-      .leftJoinAndSelect('mapper.following', 'user')
+      .innerJoinAndSelect('mapper.following', 'user')
       .where(
         new Brackets((qb) => {
           qb.where('user.username LIKE :query OR user.nickname LIKE :query', {
@@ -47,19 +48,35 @@ export class MapperUserFollowRepository {
           });
         }),
       )
-      .andWhere('mapper.userId = :userId', {
-        userId: userId,
-      })
       .andWhere('user.delYn = :delYn', { delYn: YN.N })
+      .andWhere('mapper.userId = :userId', {
+        userId: followId,
+      });
+
+    if (excludeUserIds.length > 0) {
+      users.andWhere('mapper.userId NOT IN (:...userId)', {
+        userId: [excludeUserIds],
+      });
+    }
+
+    users
       .orderBy('mapper.createdAt', mapperUserfollowListDto.orderBy)
       .offset(offset)
       .limit(limit);
 
-    const [items, totalCount] = await user.getManyAndCount();
+    const [items, totalCount] = await users.getManyAndCount();
     const lasPage = Math.ceil(totalCount / limit);
 
+    const sortedItems = items.map((item) => item.following);
+
+    // 본인 정보 가장 상단 노출
+    const findIndex = sortedItems.findIndex((user) => user.id === userId);
+    if (findIndex !== -1) {
+      sortedItems.unshift(...sortedItems.splice(findIndex, 1));
+    }
+
     return {
-      items: items.map((item) => item.following),
+      items: sortedItems,
       totalCount: totalCount,
       pageInfo: {
         page,
@@ -89,15 +106,17 @@ export class MapperUserFollowRepository {
    */
   async findAllByFollowers(
     userId: number,
+    followId: number,
     mapperUserfollowListDto: MapperUserFollowListDto,
+    excludeUserIds?: number[],
   ): Promise<PaginateResponseVo<UserFindOneVo>> {
     const page = mapperUserfollowListDto.page;
     const limit = mapperUserfollowListDto.limit;
     const offset = (page - 1) * limit;
 
-    const user = this.mapperUserFollowRepository
+    const users = this.mapperUserFollowRepository
       .createQueryBuilder('mapper')
-      .leftJoinAndSelect('mapper.follower', 'user')
+      .innerJoinAndSelect('mapper.follower', 'user')
       .where(
         new Brackets((qb) => {
           qb.where('user.username LIKE :query OR user.nickname LIKE :query', {
@@ -105,19 +124,35 @@ export class MapperUserFollowRepository {
           });
         }),
       )
-      .andWhere('mapper.followingId = :followingId', {
-        followingId: userId,
-      })
       .andWhere('user.delYn = :delYn', { delYn: YN.N })
+      .andWhere('mapper.followingId = :followingId', {
+        followingId: followId,
+      });
+
+    if (excludeUserIds.length > 0) {
+      users.andWhere('mapper.userId NOT IN (:...userId)', {
+        userId: [...excludeUserIds],
+      });
+    }
+
+    users
       .orderBy('mapper.createdAt', mapperUserfollowListDto.orderBy)
       .offset(offset)
       .limit(limit);
 
-    const [items, totalCount] = await user.getManyAndCount();
+    const [items, totalCount] = await users.getManyAndCount();
     const lasPage = Math.ceil(totalCount / limit);
 
+    const sortedItems = items.map((item) => item.follower);
+
+    // 본인 정보 가장 상단 노출
+    const findIndex = sortedItems.findIndex((user) => user.id === userId);
+    if (findIndex !== -1) {
+      sortedItems.unshift(...sortedItems.splice(findIndex, 1));
+    }
+
     return {
-      items: items.map((item) => item.follower),
+      items: sortedItems,
       totalCount: totalCount,
       pageInfo: {
         page,
@@ -172,7 +207,7 @@ export class MapperUserFollowRepository {
     mapperUserFollowDeleteDto: MapperUserFollowDeleteDto,
   ) {
     await dataSource.transaction(async (transaction) => {
-      await dataSource
+      await transaction
         .createQueryBuilder()
         .delete()
         .from(MapperUserFollow)

@@ -13,10 +13,14 @@ import {
 } from './dto';
 import { UserDeleteDto } from './dto/user-delete.dto';
 import { PaginateResponseVo } from 'src/core';
+import { UserBlockRepository } from '../user-block/user-block.repository';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly userBlockRepository: UserBlockRepository,
+  ) {}
 
   // GET SERVICES
 
@@ -28,7 +32,11 @@ export class UserService {
   public async findAll(
     userListDto?: UserListDto,
   ): Promise<PaginateResponseVo<UserFindOneVo>> {
-    return await this.userRepository.findAll(userListDto);
+    // * 나를 차단한 유저 검색 제외
+    const blockedMeUsers = await this.userBlockRepository.findAllByBlockedIds(
+      userListDto.viewerId,
+    );
+    return await this.userRepository.findAll(userListDto, blockedMeUsers);
   }
 
   /**

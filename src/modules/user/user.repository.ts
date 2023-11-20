@@ -17,7 +17,7 @@ import {
 import { UserHistory } from '../user-history/user-history.entity';
 import { HashService } from '../auth/hash.service';
 import { MapperUserFollow } from '../mapper-user-follow/mapper-user-follow.entity';
-import { ORDER_BY_VALUE, USER_STATUS, YN } from 'src/common';
+import { ORDER_BY_VALUE, USER_BLOCK, USER_STATUS, YN } from 'src/common';
 import { UserDeleteDto } from './dto/user-delete.dto';
 import { UserBlock } from '../user-block/user-block.entity';
 import { PaginateResponseVo } from 'src/core';
@@ -40,12 +40,13 @@ export class UserRepository {
    */
   public async findAll(
     userListDto?: UserListDto,
+    excludeUserIds?: number[],
   ): Promise<PaginateResponseVo<UserFindOneVo>> {
     const page = userListDto?.page;
     const limit = userListDto?.limit;
     const offset = (page - 1) * limit;
 
-    const blockUsers = this.userRepository
+    const users = this.userRepository
       .createQueryBuilder('user')
       .where(
         new Brackets((qb) => {
@@ -54,13 +55,15 @@ export class UserRepository {
           });
         }),
       )
-      .andWhere('user.id != :userId', { userId: userListDto.viewerId })
+      .andWhere('user.id NOT IN (:...userId)', {
+        userId: [userListDto.viewerId, ...excludeUserIds],
+      })
       .andWhere('user.delYn = :delYn', { delYn: YN.N })
       .orderBy('user.createdAt', ORDER_BY_VALUE.ASC)
       .offset(offset)
       .limit(limit);
 
-    const [items, totalCount] = await blockUsers.getManyAndCount();
+    const [items, totalCount] = await users.getManyAndCount();
     const lasPage = Math.ceil(totalCount / limit);
 
     return {
@@ -162,6 +165,9 @@ export class UserRepository {
         .where('userBlock.userId = :userId', { userId: user.id })
         .andWhere('userBlock.blockedUserId = :blockedUserId', {
           blockedUserId: viewerId,
+        })
+        .andWhere('userBlock.actionType = :actionType', {
+          actionType: USER_BLOCK.BLOCKER,
         })
         .getOne();
 

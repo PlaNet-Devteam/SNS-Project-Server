@@ -6,10 +6,13 @@ import { FeedService } from './feed.service';
 import { FeedController } from './feed.controller';
 import { UserModule } from '../user/user.module';
 import { userProviders } from '../user/user.provider';
-import { UserBlockModule } from '../user-block/user-block.module';
+// import { UserBlockModule } from '../user-block/user-block.module';
 import { FeedLikeModule } from '../feed-like/feed-like.module';
 import { TagModule } from '../tag/tag.module';
 import { tagProviders } from '../tag/tag.provider';
+import { userBlockProviders } from '../user-block/user-block.provider';
+import { UserBlockRepository } from '../user-block/user-block.repository';
+import { UserBlockModule } from '../user-block/user-block.module';
 
 @Module({
   imports: [
@@ -22,6 +25,7 @@ import { tagProviders } from '../tag/tag.provider';
   controllers: [FeedController],
   providers: [
     ...userProviders,
+    ...userBlockProviders,
     ...feedProviders,
     ...tagProviders,
     FeedRepository,

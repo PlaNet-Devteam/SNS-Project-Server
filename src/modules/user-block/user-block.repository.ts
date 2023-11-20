@@ -4,6 +4,7 @@ import { UserBlock } from './user-block.entity';
 import { Repository } from 'typeorm';
 import { PaginateResponseVo } from 'src/core';
 import { UserBlockCreateDto, UserBlockListDto } from './dto';
+import { ORDER_BY_VALUE, USER_BLOCK } from 'src/common';
 
 @Injectable()
 export class UserBlockRepository {
@@ -13,6 +14,13 @@ export class UserBlockRepository {
   ) {}
 
   // SELECTS
+
+  /**
+   * 내가 차단한 유저 목록
+   * @param userId
+   * @param userBlockListDto
+   * @returns
+   */
   public async findAll(
     userId: number,
     userBlockListDto: UserBlockListDto,
@@ -23,9 +31,12 @@ export class UserBlockRepository {
 
     const blockUsers = this.userBlockRepository
       .createQueryBuilder('user')
-      .leftJoinAndSelect('user.blockedUser', 'blockedUser')
+      .innerJoinAndSelect('user.blockedUser', 'blockedUser')
       .where('user.userId = :userId', { userId: userId })
-      .orderBy('user.createdAt', 'DESC')
+      .andWhere('user.actionType = :actionType', {
+        actionType: USER_BLOCK.BLOCKER,
+      })
+      .orderBy('user.createdAt', ORDER_BY_VALUE.DESC)
       .offset(offset)
       .limit(limit);
 
@@ -41,6 +52,46 @@ export class UserBlockRepository {
         isLast: page === lasPage ? true : false,
       },
     };
+  }
+
+  /**
+   * 내가 차단한 유저 ID 배열
+   * @param userId
+   * @returns
+   */
+  public async findAllByBlockerIds(userId: number): Promise<number[]> {
+    const users = await UserBlock.createQueryBuilder('userBlock')
+      .where('userBlock.userId = :userId', {
+        userId,
+      })
+      .andWhere('userBlock.actionType = :actionType', {
+        actionType: USER_BLOCK.BLOCKER,
+      })
+      .getMany();
+
+    const userIds = users.map((user) => user.blockedUserId);
+
+    return userIds;
+  }
+
+  /**
+   * 나를 차단한 유저 ID 배열
+   * @param userId
+   * @returns
+   */
+  public async findAllByBlockedIds(userId: number): Promise<number[]> {
+    const users = await UserBlock.createQueryBuilder('userBlock')
+      .where('userBlock.userId = :userId', {
+        userId,
+      })
+      .andWhere('userBlock.actionType = :actionType', {
+        actionType: USER_BLOCK.BLOCKED,
+      })
+      .getMany();
+
+    const userIds = users.map((user) => user.blockedUserId);
+
+    return userIds;
   }
 
   public async findOne(
@@ -101,7 +152,7 @@ export class UserBlockRepository {
    */
   public async deleteUserBlock(userBlockCreateDto: UserBlockCreateDto) {
     await dataSource.transaction(async (transaction) => {
-      await dataSource
+      await transaction
         .createQueryBuilder()
         .delete()
         .from(UserBlock)

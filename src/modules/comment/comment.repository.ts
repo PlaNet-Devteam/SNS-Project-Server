@@ -152,7 +152,7 @@ export class CommentRepository {
    */
   async deleteComemnt(feedId: number, commentId: number) {
     await dataSource.transaction(async (transaction) => {
-      await dataSource
+      await transaction
         .createQueryBuilder()
         .delete()
         .from(Comment)
