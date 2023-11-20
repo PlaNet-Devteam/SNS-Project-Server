@@ -4,6 +4,7 @@ import { UserBlockRepository } from './user-block.repository';
 import { UserRepository } from '../user/user.repository';
 import { MapperUserFollowRepository } from '../mapper-user-follow/mapper-user-follow.repository';
 import { MapperUserFollowDeleteDto } from '../mapper-user-follow/dto';
+import { USER_BLOCK } from 'src/common';
 
 @Injectable()
 export class UserBlockService {
@@ -62,7 +63,21 @@ export class UserBlockService {
       );
     }
 
-    await this.userBlockRepository.createUserBlock(userBlockCreateDto);
+    const blockerUser = new UserBlockCreateDto({
+      userId: userBlockCreateDto.userId,
+      blockedUserId: userBlockCreateDto.blockedUserId,
+      actionType: USER_BLOCK.BLOCKER,
+    });
+
+    await this.userBlockRepository.createUserBlock(blockerUser);
+
+    const blockedUser = new UserBlockCreateDto({
+      userId: userBlockCreateDto.blockedUserId,
+      blockedUserId: userBlockCreateDto.userId,
+      actionType: USER_BLOCK.BLOCKED,
+    });
+
+    await this.userBlockRepository.createUserBlock(blockedUser);
   }
 
   /**

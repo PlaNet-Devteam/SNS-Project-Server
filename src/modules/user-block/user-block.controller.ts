@@ -17,6 +17,7 @@ import { BaseResponseVo, PaginateResponseVo, UserGuard } from 'src/core';
 import { UserInfo } from 'src/common';
 import { User } from '../user/user.entity';
 import { UserBlock } from './user-block.entity';
+import { UserFindOneVo } from '../user/vo';
 
 @Controller('user-block')
 @ApiTags('USER BLOCK')
@@ -37,8 +38,12 @@ export class UserBlockController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async createUserBlock(@Body() UserBlockCreateDto: UserBlockCreateDto) {
-    return await this.userBlockService.createUserBlock(UserBlockCreateDto);
+  async createUserBlock(
+    @Body() UserBlockCreateDto: UserBlockCreateDto,
+  ): Promise<BaseResponseVo<UserFindOneVo>> {
+    return new BaseResponseVo<UserFindOneVo>(
+      await this.userBlockService.createUserBlock(UserBlockCreateDto),
+    );
   }
 
   @Delete()

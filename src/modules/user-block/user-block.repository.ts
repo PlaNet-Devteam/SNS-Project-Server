@@ -4,6 +4,7 @@ import { UserBlock } from './user-block.entity';
 import { Repository } from 'typeorm';
 import { PaginateResponseVo } from 'src/core';
 import { UserBlockCreateDto, UserBlockListDto } from './dto';
+import { ORDER_BY_VALUE } from 'src/common';
 
 @Injectable()
 export class UserBlockRepository {
@@ -13,6 +14,7 @@ export class UserBlockRepository {
   ) {}
 
   // SELECTS
+  // * 내가 차단한 유저
   public async findAll(
     userId: number,
     userBlockListDto: UserBlockListDto,
@@ -23,9 +25,9 @@ export class UserBlockRepository {
 
     const blockUsers = this.userBlockRepository
       .createQueryBuilder('user')
-      .leftJoinAndSelect('user.blockedUser', 'blockedUser')
+      .innerJoinAndSelect('user.blockedUser', 'blockedUser')
       .where('user.userId = :userId', { userId: userId })
-      .orderBy('user.createdAt', 'DESC')
+      .orderBy('user.createdAt', ORDER_BY_VALUE.DESC)
       .offset(offset)
       .limit(limit);
 

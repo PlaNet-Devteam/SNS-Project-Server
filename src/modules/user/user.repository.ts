@@ -17,7 +17,7 @@ import {
 import { UserHistory } from '../user-history/user-history.entity';
 import { HashService } from '../auth/hash.service';
 import { MapperUserFollow } from '../mapper-user-follow/mapper-user-follow.entity';
-import { ORDER_BY_VALUE, USER_STATUS, YN } from 'src/common';
+import { ORDER_BY_VALUE, USER_BLOCK, USER_STATUS, YN } from 'src/common';
 import { UserDeleteDto } from './dto/user-delete.dto';
 import { UserBlock } from '../user-block/user-block.entity';
 import { PaginateResponseVo } from 'src/core';
@@ -45,7 +45,19 @@ export class UserRepository {
     const limit = userListDto?.limit;
     const offset = (page - 1) * limit;
 
-    const blockUsers = this.userRepository
+    // * 나를 차단한 유저 검색 제외
+    const blockedMeUsers = await UserBlock.createQueryBuilder('userBlock')
+      .where('userBlock.userId = :userId', {
+        userId: userListDto.viewerId,
+      })
+      .andWhere('userBlock.actionType = :actionType', {
+        actionType: USER_BLOCK.BLOCKED,
+      })
+      .getMany();
+
+    const blockedMeUserIds = blockedMeUsers.map((user) => user.blockedUserId);
+
+    const users = this.userRepository
       .createQueryBuilder('user')
       .where(
         new Brackets((qb) => {
@@ -54,13 +66,15 @@ export class UserRepository {
           });
         }),
       )
-      .andWhere('user.id != :userId', { userId: userListDto.viewerId })
+      .andWhere('user.id NOT IN (:...userId)', {
+        userId: [userListDto.viewerId, ...blockedMeUserIds],
+      })
       .andWhere('user.delYn = :delYn', { delYn: YN.N })
       .orderBy('user.createdAt', ORDER_BY_VALUE.ASC)
       .offset(offset)
       .limit(limit);
 
-    const [items, totalCount] = await blockUsers.getManyAndCount();
+    const [items, totalCount] = await users.getManyAndCount();
     const lasPage = Math.ceil(totalCount / limit);
 
     return {
@@ -162,6 +176,9 @@ export class UserRepository {
         .where('userBlock.userId = :userId', { userId: user.id })
         .andWhere('userBlock.blockedUserId = :blockedUserId', {
           blockedUserId: viewerId,
+        })
+        .andWhere('userBlock.actionType = :actionType', {
+          actionType: USER_BLOCK.BLOCKER,
         })
         .getOne();
 
