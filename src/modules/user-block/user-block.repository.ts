@@ -33,6 +33,9 @@ export class UserBlockRepository {
       .createQueryBuilder('user')
       .innerJoinAndSelect('user.blockedUser', 'blockedUser')
       .where('user.userId = :userId', { userId: userId })
+      .andWhere('user.actionType = :actionType', {
+        actionType: USER_BLOCK.BLOCKER,
+      })
       .orderBy('user.createdAt', ORDER_BY_VALUE.DESC)
       .offset(offset)
       .limit(limit);
