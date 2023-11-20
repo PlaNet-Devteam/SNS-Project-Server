@@ -27,11 +27,14 @@ export class MapperUserFollowService {
   ): Promise<PaginateResponseVo<UserFindOneVo>> {
     const profileUser = await this.userRepository.findUserByUsername(username);
 
-    // *  나를 차단한 유저 검색 제외
+    // * 차단한 유저 혹은 나를 차단한 유저 검색 제외
+    const blockerUsers = await this.userBlockRepository.findAllByBlockerIds(
+      user.id,
+    );
     const blockedMeUsers = await this.userBlockRepository.findAllByBlockedIds(
       user.id,
     );
-    const excludeUserIds = [...blockedMeUsers];
+    const excludeUserIds = [...blockerUsers, ...blockedMeUsers];
 
     if (!profileUser)
       throw new NotFoundException('존재하지 않는 사용자 입니다');
@@ -52,11 +55,14 @@ export class MapperUserFollowService {
     if (!profileUser)
       throw new NotFoundException('존재하지 않는 사용자 입니다');
 
-    // *  나를 차단한 유저 검색 제외
+    // * 차단한 유저 혹은 나를 차단한 유저 검색 제외
+    const blockerUsers = await this.userBlockRepository.findAllByBlockerIds(
+      user.id,
+    );
     const blockedMeUsers = await this.userBlockRepository.findAllByBlockedIds(
       user.id,
     );
-    const excludeUserIds = [...blockedMeUsers];
+    const excludeUserIds = [...blockerUsers, ...blockedMeUsers];
 
     return await this.mapperUserFollowRepository.findAllByFollowers(
       user.id,
