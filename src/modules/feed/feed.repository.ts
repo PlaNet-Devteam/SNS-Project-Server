@@ -38,48 +38,24 @@ export class FeedRepository {
   public async findAll(
     user: User,
     feedListDto?: FeedListDto,
-  ): Promise<PaginateResponseVo<FeedFindOneVo>> {
-    const feeds = this.feedRepository
-      .createQueryBuilder('feed')
-      .leftJoinAndSelect('feed.user', 'user')
-      .where('user.delYn = :delYn', { delYn: YN.N })
-      .andWhere('feed.displayYn = :displayYn', { displayYn: YN.Y })
-      .andWhere('feed.status = :status', { status: feedListDto.status })
-      .orderBy('feed.createdAt', ORDER_BY_VALUE.DESC)
-      .Paginate(feedListDto);
-
-    const [items, totalCount] = await feeds.getManyAndCount();
-
-    for (const item of items) {
-      await this.processFeedItem(item, user.id);
-    }
-
-    return generatePaginatedResponse(
-      items,
-      totalCount,
-      feedListDto.page,
-      feedListDto.limit,
-    );
-  }
-
-  /**
-   * 태그별 피드 목록
-   * @returns
-   */
-  public async findAllByTag(
-    user: User,
-    feedListDto?: FeedListDto,
+    excludeUserIds?: number[],
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
     const feeds = this.feedRepository
       .createQueryBuilder('feed')
       .innerJoinAndSelect('feed.user', 'user')
       .leftJoinAndSelect('feed.tags', 'tags')
-      .where('user.delYn = :delYn', { delYn: YN.N })
       .andWhere('feed.displayYn = :displayYn', { displayYn: YN.Y })
-      .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE })
-      .orderBy('feed.createdAt', ORDER_BY_VALUE.DESC);
+      .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE });
 
-    const filteredFeeds: Feed[] = (await feeds.getMany()).filter((feed) =>
+    if (excludeUserIds.length > 0) {
+      feeds.andWhere('user.id NOT IN (:...userId)', {
+        userId: [excludeUserIds],
+      });
+    }
+
+    const filteredFeeds: Feed[] = (
+      await feeds.orderBy('feed.createdAt', ORDER_BY_VALUE.DESC).getMany()
+    ).filter((feed) =>
       feed.tags.some((tag) => tag.tagName === feedListDto.tagName),
     );
 

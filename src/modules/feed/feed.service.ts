@@ -29,17 +29,22 @@ export class FeedService {
     user: User,
     feedListDto?: FeedListDto,
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
-    const feeds = await this.feedRepository.findAll(user, feedListDto);
-    if (!feeds) throw new NotFoundException();
-    return feeds;
-  }
+    // * 차단한 유저 혹은 나를 차단한 유저의 피드 검색 제외
+    const blockerUsers = await this.userBlockRepository.findAllByBlockerIds(
+      feedListDto.viewerId,
+    );
+    const blockedUsers = await this.userBlockRepository.findAllByBlockedIds(
+      feedListDto.viewerId,
+    );
+    const excludeUserIds = [...blockerUsers, ...blockedUsers];
 
-  public async findAllByTag(
-    user: User,
-    feedListDto?: FeedListDto,
-  ): Promise<PaginateResponseVo<FeedFindOneVo>> {
-    const feeds = await this.feedRepository.findAllByTag(user, feedListDto);
+    const feeds = await this.feedRepository.findAll(
+      user,
+      feedListDto,
+      excludeUserIds,
+    );
     if (!feeds) throw new NotFoundException();
+
     return feeds;
   }
 
