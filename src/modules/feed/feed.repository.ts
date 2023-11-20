@@ -53,12 +53,15 @@ export class FeedRepository {
       });
     }
 
-    const filteredFeeds: Feed[] = (
-      await feeds.orderBy('feed.createdAt', ORDER_BY_VALUE.DESC).getMany()
-    ).filter((feed) =>
-      feed.tags.some((tag) => tag.tagName === feedListDto.tagName),
-    );
+    const filteredFeeds: Feed[] = await feeds
+      .orderBy('feed.createdAt', ORDER_BY_VALUE.DESC)
+      .getMany();
 
+    if (feedListDto.tagName && feedListDto.tagName.length > 0) {
+      filteredFeeds.filter((feed) =>
+        feed.tags.some((tag) => tag.tagName === feedListDto.tagName),
+      );
+    }
     const offset = (feedListDto.page - 1) * feedListDto.limit;
     const paginatedFeeds = filteredFeeds.slice(
       offset,
