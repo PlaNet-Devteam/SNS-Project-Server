@@ -54,8 +54,8 @@ export class MapperUserFollowRepository {
       });
 
     if (excludeUserIds.length > 0) {
-      users.andWhere('mapper.userId NOT IN (:...userId)', {
-        userId: [excludeUserIds],
+      users.andWhere('mapper.followingId NOT IN (:...followingId)', {
+        followingId: [...excludeUserIds],
       });
     }
 
