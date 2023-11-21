@@ -20,7 +20,7 @@ import { MapperUserFollow } from '../mapper-user-follow/mapper-user-follow.entit
 import { ORDER_BY_VALUE, USER_BLOCK, USER_STATUS, YN } from 'src/common';
 import { UserDeleteDto } from './dto/user-delete.dto';
 import { UserBlock } from '../user-block/user-block.entity';
-import { PaginateResponseVo } from 'src/core';
+import { PaginateResponseVo, generatePaginatedResponse } from 'src/core';
 import { UserFindOneVo } from './vo';
 
 @Injectable()
@@ -42,10 +42,6 @@ export class UserRepository {
     userListDto?: UserListDto,
     excludeUserIds?: number[],
   ): Promise<PaginateResponseVo<UserFindOneVo>> {
-    const page = userListDto?.page;
-    const limit = userListDto?.limit;
-    const offset = (page - 1) * limit;
-
     const users = this.userRepository
       .createQueryBuilder('user')
       .where(
@@ -55,26 +51,33 @@ export class UserRepository {
           });
         }),
       )
-      .andWhere('user.id NOT IN (:...userId)', {
-        userId: [userListDto.viewerId, ...excludeUserIds],
-      })
-      .andWhere('user.delYn = :delYn', { delYn: YN.N })
-      .orderBy('user.createdAt', ORDER_BY_VALUE.ASC)
-      .offset(offset)
-      .limit(limit);
+      .andWhere('user.delYn = :delYn', { delYn: YN.N });
+
+    if (excludeUserIds.length > 0) {
+      users.andWhere('user.id NOT IN (:...userId)', {
+        userId: [...excludeUserIds],
+      });
+    }
+
+    users.orderBy('user.createdAt', ORDER_BY_VALUE.ASC).Paginate(userListDto);
 
     const [items, totalCount] = await users.getManyAndCount();
-    const lasPage = Math.ceil(totalCount / limit);
 
-    return {
-      items: items,
-      totalCount: totalCount,
-      pageInfo: {
-        page,
-        limit,
-        isLast: page === lasPage ? true : false,
-      },
-    };
+    // 본인 정보 가장 상단 노출
+    const findIndex = items.findIndex(
+      (user) => user.id === Number(userListDto.viewerId),
+    );
+
+    if (findIndex !== -1) {
+      items.unshift(...items.splice(findIndex, 1));
+    }
+
+    return generatePaginatedResponse(
+      items,
+      totalCount,
+      userListDto.page,
+      userListDto.limit,
+    );
   }
 
   /**
