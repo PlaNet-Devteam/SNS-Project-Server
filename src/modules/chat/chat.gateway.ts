@@ -10,13 +10,15 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ChatUserGatewayDto } from './dto';
+import { ChatService } from './chat.service';
 
 @WebSocketGateway(8080)
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private logger: Logger = new Logger('ChatGateway');
-  private chatRooms: Map<string, Set<Socket>> = new Map();
 
   @WebSocketServer() public server: Server;
+
+  constructor(private readonly chatService: ChatService) {}
 
   handleConnection(client: Socket) {
     console.log('User connected successfully');
@@ -25,6 +27,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
+    // this.chatService.removeClientFromRooms(client); // 채팅방 나가기
   }
 
   @SubscribeMessage('message')
@@ -39,14 +42,37 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() chatUserGatewayDto: ChatUserGatewayDto,
   ) {
-    if (!this.chatRooms.has(chatUserGatewayDto.roomId)) {
-      this.chatRooms.set(chatUserGatewayDto.roomId, new Set());
-    }
-    this.chatRooms.get(chatUserGatewayDto.roomId).add(client);
-
-    client.join(chatUserGatewayDto.roomId);
+    this.chatService.joinRoom(client, chatUserGatewayDto.roomId);
     this.server.sockets
       .to(chatUserGatewayDto.roomId)
       .emit('join_room', `join the room ${chatUserGatewayDto.roomId}`);
+  }
+
+  @SubscribeMessage('create_room')
+  createRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { myName: string; otherUserName: string },
+  ) {
+    const { myName, otherUserName } = data;
+    const roomId = this.chatService.createOrJoinChatRoom(myName, otherUserName);
+    this.chatService.createRoom(roomId, client);
+    this.server.sockets.to(roomId).emit('create_room', `${roomId}`);
+  }
+
+  @SubscribeMessage('get_room_list')
+  handleGetRoomList(@ConnectedSocket() client: Socket) {
+    const allRoomIds = this.chatService.getAllRoomIds();
+    console.log(allRoomIds);
+    client.emit('get_room_list', allRoomIds);
+  }
+
+  @SubscribeMessage('get_other_user')
+  handleGetOtherUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string; user1Id: string },
+  ) {
+    const { roomId, user1Id } = data;
+    const otherUser = this.chatService.findUserInRoom(roomId, user1Id);
+    client.emit('get_other_user', `${otherUser}`);
   }
 }
