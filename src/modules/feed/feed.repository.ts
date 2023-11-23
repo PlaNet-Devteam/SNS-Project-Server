@@ -53,25 +53,28 @@ export class FeedRepository {
       });
     }
 
-    const filteredFeeds: Feed[] = await feeds
+    let filteredFeeds = await feeds
       .orderBy('feed.createdAt', ORDER_BY_VALUE.DESC)
       .getMany();
 
     if (feedListDto.tagName && feedListDto.tagName.length > 0) {
-      filteredFeeds.filter((feed) =>
+      filteredFeeds = filteredFeeds.filter((feed) =>
         feed.tags.some((tag) => tag.tagName === feedListDto.tagName),
       );
     }
+
     const offset = (feedListDto.page - 1) * feedListDto.limit;
     const paginatedFeeds = filteredFeeds.slice(
       offset,
       offset + feedListDto.limit,
     );
+
     const [items, totalCount] = [paginatedFeeds, filteredFeeds.length];
 
     for (const item of filteredFeeds) {
       await this.processFeedItem(item, user.id);
     }
+
     return generatePaginatedResponse(
       items,
       totalCount,
