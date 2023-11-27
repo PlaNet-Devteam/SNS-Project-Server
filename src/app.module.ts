@@ -9,6 +9,7 @@ import {
   MapperUserFollowModule,
   UserBlockModule,
   TagModule,
+  UserSocialModule,
 } from './modules';
 import { UserLoginHistoryModule } from './modules/user-login-history/user-login-history.module';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
@@ -30,6 +31,7 @@ import { MapperFeedTagModule } from './modules/mapper-feed-tag/mapper-feed-tag.m
     UserModule,
     UserBlockModule,
     UserLoginHistoryModule,
+    // UserSocialModule,
     FeedModule,
     CommentModule,
     CommentReplyModule,

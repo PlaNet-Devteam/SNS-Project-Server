@@ -32,7 +32,7 @@ export class CommentRepository {
 
     const comments = this.commentRepository
       .createQueryBuilder('comment')
-      .leftJoinAndSelect('comment.user', 'user')
+      .innerJoinAndSelect('comment.user', 'user')
       .select([
         'comment.id',
         'comment.feedId',
@@ -73,7 +73,7 @@ export class CommentRepository {
   public async findOneComment(id: number): Promise<CommentFindOneVo> {
     const comment = await this.commentRepository
       .createQueryBuilder('comment')
-      .leftJoinAndSelect('comment.user', 'user')
+      .innerJoinAndSelect('comment.user', 'user')
       .select([
         'comment.id',
         'comment.userId',

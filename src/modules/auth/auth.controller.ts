@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Patch,
@@ -11,9 +12,14 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { AuthLoginDto, ChangePasswordDto } from './dto';
+import { AuthGoogleDto, AuthLoginDto, ChangePasswordDto } from './dto';
 import { Request, Response } from 'express';
-import { BaseResponseVo, RefreshGuard, UserGuard } from 'src/core';
+import {
+  BaseResponseVo,
+  GoogleAuthGuard,
+  RefreshGuard,
+  UserGuard,
+} from 'src/core';
 import { AuthTokenVo } from './vo/auth-token.vo';
 import { User } from '../user/user.entity';
 import { UserInfo } from '../../common';
@@ -48,6 +54,25 @@ export class AuthController {
     // refresh token 쿠키에 설정
     if (authVo) response.cookie('refresh-token', authVo.refreshToken);
     return new BaseResponseVo<AuthTokenVo>(authVo);
+  }
+
+  /**
+   * 구글 로그인
+   * @param code
+   * @param response
+   * @returns
+   */
+  @Post('google/login')
+  @HttpCode(HttpStatus.OK)
+  public async googleLogin(@Body() token: { token: string }): Promise<void> {
+    console.log('token', token);
+    return this.authService.getGoogleToken(token.token);
+  }
+
+  @Get('google/redirect')
+  public async googleRediredt(@Req() request: Request) {
+    const { user } = request;
+    return user;
   }
 
   /**

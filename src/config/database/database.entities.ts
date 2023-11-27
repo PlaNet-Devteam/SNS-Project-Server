@@ -10,6 +10,7 @@ import { Tag } from 'src/modules/tag/tag.entity';
 import { UserBlock } from 'src/modules/user-block/user-block.entity';
 import { UserHistory } from 'src/modules/user-history/user-history.entity';
 import { UserLoginHistory } from 'src/modules/user-login-history/user-login-history.entity';
+import { UserSocial } from 'src/modules/user-social/user-social.entity';
 import { User } from 'src/modules/user/user.entity';
 
 export const Entities = [
@@ -17,6 +18,7 @@ export const Entities = [
   UserHistory,
   UserLoginHistory,
   UserBlock,
+  UserSocial,
   Feed,
   FeedImage,
   FeedLike,

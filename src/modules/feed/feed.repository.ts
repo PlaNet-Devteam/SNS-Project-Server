@@ -93,7 +93,7 @@ export class FeedRepository {
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
     const feeds = this.feedRepository
       .createQueryBuilder('feed')
-      .leftJoinAndSelect('feed.user', 'user')
+      .innerJoinAndSelect('feed.user', 'user')
       .where('feed.userId IN (:...userId)', {
         userId: [...user.followingIds, user.id],
       })
@@ -128,7 +128,7 @@ export class FeedRepository {
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
     const feeds = this.feedRepository
       .createQueryBuilder('feed')
-      .leftJoinAndSelect('feed.user', 'user')
+      .innerJoinAndSelect('feed.user', 'user')
       .where('feed.displayYn = :displayYn', { displayYn: YN.Y })
       .andWhere('feed.status = :status', { status: feedListDto.status })
       .andWhere('feed.userId = :userId', { userId: userId })
@@ -159,7 +159,7 @@ export class FeedRepository {
     feedListDto?: FeedListDto,
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
     const feeds = FeedBookmark.createQueryBuilder('feedBookmark')
-      .leftJoinAndSelect('feedBookmark.feed', 'feed')
+      .innerJoinAndSelect('feedBookmark.feed', 'feed')
       .where('feed.displayYn = :displayYn', { displayYn: YN.Y })
       .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE })
       .andWhere('feedBookmark.userId = :userId', { userId: user.id })
@@ -188,7 +188,7 @@ export class FeedRepository {
   public async findOneFeed(feedId: number): Promise<FeedFindOneVo> {
     const feed = await this.feedRepository
       .createQueryBuilder('feed')
-      .leftJoinAndSelect('feed.user', 'user')
+      .innerJoinAndSelect('feed.user', 'user')
       .where('feed.id = :id', { id: feedId })
       .getOne();
 
@@ -208,7 +208,7 @@ export class FeedRepository {
   ): Promise<FeedFindOneVo> {
     const feed = await this.feedRepository
       .createQueryBuilder('feed')
-      .leftJoinAndSelect('feed.user', 'user')
+      .innerJoinAndSelect('feed.user', 'user')
       .where('feed.id = :id', { id: feedId })
       .getOne();
 

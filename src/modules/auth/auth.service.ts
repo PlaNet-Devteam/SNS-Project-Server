@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -13,17 +14,19 @@ import { UserPayload } from './type';
 import * as cacheConvention from '../_context/cache.convention.json';
 import Redis from 'ioredis';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
-import { AuthLoginDto, ChangePasswordDto } from './dto';
+import { AuthGoogleDto, AuthLoginDto, ChangePasswordDto } from './dto';
 import { AuthTokenVo } from './vo/auth-token.vo';
 import { UserLoginHistory } from '../user-login-history/user-login-history.entity';
 import { RESPONSE_STATUS, USER_LOGIN, YN } from 'src/common';
 import { UserLoginHistoryRepository } from '../user-login-history/user-login-history.repository';
 import { UserFindOneVo } from '../user/vo';
+import axios from 'axios';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userRepository: UserRepository,
+    // private readonly userSocialRepository: UserSocialRepository,
     private readonly userLoginHistoryRepository: UserLoginHistoryRepository,
     private readonly hashService: HashService,
     private readonly jwtService: JwtService,
@@ -72,6 +75,56 @@ export class AuthService {
       userInfo: user,
     });
     return data;
+  }
+
+  async getGoogleToken(code: string) {
+    const params = {
+      code,
+      client_id: process.env.OAUTH_GOOGLE_CLIENT_ID,
+      client_secret: process.env.OAUTH_GOOGLE_CLIENT_SECRET,
+      redirect_uri: process.env.OAUTH_GOOGLE_CALLBACK_URL,
+      grant_type: 'authorization_code',
+    };
+    console.log('params', params);
+    try {
+      const response = await axios.post(
+        'https://oauth2.googleapis.com/token',
+        params,
+      );
+      console.log('response', response);
+    } catch (error) {
+      throw new HttpException(error.response.data, error.response.status);
+    }
+  }
+
+  async validateGoogleUser(authGoogleProfile: AuthGoogleDto): Promise<User> {
+    // * STEP 2: 이메일로 유저 존재 여부 체크
+    const user = await this.userRepository.findUserByEmail(
+      authGoogleProfile.email,
+    );
+
+    if (user) {
+      // * STEP 2-1: 해당 유저가 User Social 테이블에 없을 경우 userId 매핑하여 생성
+      // const socialUser = await this.userSocialRepository.findOneByUserId(
+      //   user.id,
+      // );
+      // if (!socialUser) {
+      //   const newSocialUser = new UserSocialCreateDto();
+      //   newSocialUser.userId = user.id;
+      //   newSocialUser.email = authGoogleProfile.email;
+      //   newSocialUser.socialType = SOCIAL_TYPE.GOOGLE;
+      //   newSocialUser.socialUniqueId = authGoogleProfile.socialUniqueId;
+      //   this.userSocialRepository.createUserSocial(newSocialUser);
+      // }
+      return user;
+    }
+
+    // * STEP 3-1: 유저가 없을 경우 유저 생성
+  }
+
+  async findUser(id: number) {
+    const user = this.userRepository.findOneUser(id);
+    return user;
   }
 
   /**
