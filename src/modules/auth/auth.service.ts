@@ -29,8 +29,7 @@ export class AuthService {
     // private readonly userSocialRepository: UserSocialRepository,
     private readonly userLoginHistoryRepository: UserLoginHistoryRepository,
     private readonly hashService: HashService,
-    private readonly jwtService: JwtService,
-    @InjectRedis() private readonly redis: Redis,
+    private readonly jwtService: JwtService, // @InjectRedis() private readonly redis: Redis,
   ) {}
 
   /**
@@ -140,7 +139,7 @@ export class AuthService {
     });
     await this.userLoginHistoryRepository.createLoginHistory(newLogoutHistory);
 
-    await this.redis.del(`${cacheConvention.user.refreshToken}${userId}`);
+    // await this.redis.del(`${cacheConvention.user.refreshToken}${userId}`);
     return true;
   }
 
@@ -164,8 +163,8 @@ export class AuthService {
 
       // 케시 확인
       const cacheKey = `${cacheConvention.user.refreshToken}${user.id}`;
-      const cache = await this.redis.get(cacheKey);
-      if (!cache) throw new UnauthorizedException();
+      // const cache = await this.redis.get(cacheKey);
+      // if (!cache) throw new UnauthorizedException();
 
       // 새로운 토큰들 발급받기
       const newAccessToken = await this._sign_in_access_token(user);
@@ -239,7 +238,7 @@ export class AuthService {
     // 암호화
     const cacheKey = `${cacheConvention.user.refreshToken}${user.id}`;
     const encryptedToken = await this.hashService.hashString(token);
-    await this.redis.set(cacheKey, encryptedToken);
+    // await this.redis.set(cacheKey, encryptedToken);
 
     return token;
   }

@@ -18,12 +18,6 @@ import { MapperFeedTagModule } from './modules/mapper-feed-tag/mapper-feed-tag.m
 
 @Module({
   imports: [
-    RedisModule.forRoot({
-      config: {
-        host: process.env.REDIS_HOST,
-        port: Number(process.env.REDIS_PORT),
-      },
-    }),
     // service modules
     AuthModule,
     UserModule,
