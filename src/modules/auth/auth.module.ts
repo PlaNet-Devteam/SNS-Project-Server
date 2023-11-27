@@ -15,6 +15,7 @@ import { GoogleStrategy } from './strategy';
 
 @Module({
   imports: [
+    RedisModule,
     UserModule,
     // UserSocialModule,
     UserLoginHistoryModule,
