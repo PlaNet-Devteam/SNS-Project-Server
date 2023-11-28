@@ -6,6 +6,8 @@ import { CONST_STYLE } from './assets/_index';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { urlencoded, json } from 'body-parser';
 import * as compression from 'compression';
+import * as passport from 'passport';
+import * as session from 'express-session';
 import * as packageInfo from '../package.json';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder, ApiOAuth2 } from '@nestjs/swagger';
@@ -13,7 +15,6 @@ import helmet from 'helmet';
 import { ENVIRONMENT, dataSource } from './config';
 import * as cookieParser from 'cookie-parser';
 import { ClassTransformOptions } from 'class-transformer';
-import { IoAdapter } from '@nestjs/platform-socket.io';
 
 // const debug = Debug(`app:${basename(__dirname)}:${basename(__filename)}`);
 
@@ -41,7 +42,7 @@ async function bootstrap() {
 
   // CORS 설장
   app.enableCors({
-    origin: 'http://localhost:3000', // CORS variables, 배열로 지정하는게 맞음. 그리고 이 부분도 나중에 따로 뺄 수 있음
+    origin: ['http://localhost:3000', 'http://planet-sns.com'], // CORS variables, 배열로 지정하는게 맞음. 그리고 이 부분도 나중에 따로 뺄 수 있음
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     preflightContinue: false,
     optionsSuccessStatus: 204,
@@ -76,6 +77,22 @@ async function bootstrap() {
       } as ClassTransformOptions,
     }),
   );
+
+  app.use(
+    session({
+      secret: 'my-secret', // 세션을 암호화하기 위한 암호기 설정
+      resave: false, // 모든 request마다 기존에 있던 session에 아무런 변경 사항이 없을 시에도 그 session을 다시 저장하는 옵션
+      // saveUnitialized: 초기화되지 않은 세션을 저장할지 여부를 나타낸다.
+      saveUninitialized: false,
+      // 세션 쿠키에 대한 설정을 나타낸다.
+      cookie: {
+        maxAge: 60000, // 1 minute
+        httpOnly: true,
+      },
+    }),
+  );
+  app.use(passport.initialize());
+  app.use(passport.session());
 
   app.enableShutdownHooks();
   await app.listen(process.env.SERVER_PORT || 4300, '0.0.0.0');

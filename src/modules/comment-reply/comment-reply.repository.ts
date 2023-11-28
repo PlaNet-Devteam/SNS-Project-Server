@@ -36,7 +36,7 @@ export class CommentReplyRepository {
 
     const commentReplies = this.commentReplyRepository
       .createQueryBuilder('commentReply')
-      .leftJoinAndSelect('commentReply.user', 'user')
+      .innerJoinAndSelect('commentReply.user', 'user')
       .select([
         'commentReply.id',
         'commentReply.commentId',
@@ -76,7 +76,7 @@ export class CommentReplyRepository {
   public async findOneCommentReply(id: number): Promise<CommentReplyFindOneVo> {
     const commentReply = await this.commentReplyRepository
       .createQueryBuilder('commentReply')
-      .leftJoinAndSelect('commentReply.user', 'user')
+      .innerJoinAndSelect('commentReply.user', 'user')
       .select([
         'commentReply.id',
         'commentReply.userId',

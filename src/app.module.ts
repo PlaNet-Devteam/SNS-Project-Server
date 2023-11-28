@@ -17,14 +17,12 @@ import { MapperFeedTagModule } from './modules/mapper-feed-tag/mapper-feed-tag.m
 
 @Module({
   imports: [
-    process.env.NODE_ENV === ENVIRONMENT.PRODUCTION
-      ? CacheClusterModule
-      : RedisModule.forRoot({
-          config: {
-            host: process.env.REDIS_HOST,
-            port: Number(process.env.REDIS_PORT),
-          },
-        }),
+    RedisModule.forRoot({
+      config: {
+        host: process.env.REDIS_HOST,
+        port: Number(process.env.REDIS_PORT),
+      },
+    }),
     // service modules
     AuthModule,
     UserModule,

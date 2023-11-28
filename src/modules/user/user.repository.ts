@@ -242,9 +242,11 @@ export class UserRepository {
   public async createUser(userCreateDto: UserCreateDto): Promise<User> {
     const user = await dataSource.transaction(async (transaction) => {
       // * 비밀번호 암호화
-      userCreateDto.password = await this.hashService.hashString(
-        userCreateDto.password,
-      );
+      if (userCreateDto.password) {
+        userCreateDto.password = await this.hashService.hashString(
+          userCreateDto.password,
+        );
+      }
       let newUser = new User(userCreateDto);
       newUser = await transaction.save(newUser);
 

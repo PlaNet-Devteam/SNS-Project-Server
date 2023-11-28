@@ -51,6 +51,30 @@ export class AuthController {
   }
 
   /**
+   * 구글 로그인
+   * @param code
+   * @param response
+   * @returns
+   */
+  @Post('google/login')
+  @HttpCode(HttpStatus.ACCEPTED)
+  public async googleLogin(
+    @Body() token: { token: string },
+    @Res({ passthrough: true }) response: Response,
+    @Req() request: Request,
+  ) {
+    const userAgentString = request.headers['user-agent'];
+    const agent = useragent.parse(userAgentString) || null;
+    const deviceId =
+      agent.device.family === 'Other' ? 'DESKTOP' : agent.device.family;
+
+    const authVo = await this.authService.googleLogin(token.token, deviceId);
+
+    if (authVo) response.cookie('refresh-token', authVo.refreshToken);
+    return new BaseResponseVo<AuthTokenVo>(authVo);
+  }
+
+  /**
    * 로그아웃
    * @param user
    * @returns boolean
