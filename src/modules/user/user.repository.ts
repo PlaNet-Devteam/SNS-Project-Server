@@ -59,18 +59,15 @@ export class UserRepository {
       });
     }
 
-    users.orderBy('user.createdAt', ORDER_BY_VALUE.ASC).Paginate(userListDto);
+    users
+      .orderBy(
+        'CASE WHEN user.id = :userId THEN 0 ELSE 1 END',
+        ORDER_BY_VALUE.ASC,
+      )
+      .setParameter('userId', Number(userListDto.viewerId))
+      .Paginate(userListDto);
 
     const [items, totalCount] = await users.getManyAndCount();
-
-    // 본인 정보 가장 상단 노출
-    const findIndex = items.findIndex(
-      (user) => user.id === Number(userListDto.viewerId),
-    );
-
-    if (findIndex !== -1) {
-      items.unshift(...items.splice(findIndex, 1));
-    }
 
     return generatePaginatedResponse(
       items,
