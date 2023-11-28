@@ -8,8 +8,8 @@ import {
 } from './dto';
 import { MapperUserFollow } from './mapper-user-follow.entity';
 import { User } from '../user/user.entity';
-import { PaginateResponseVo } from 'src/core';
-import { YN } from 'src/common';
+import { PaginateResponseVo, generatePaginatedResponse } from 'src/core';
+import { ORDER_BY_VALUE, YN } from 'src/common';
 import { UserFindOneVo } from '../user/vo';
 
 @Injectable()
@@ -23,21 +23,17 @@ export class MapperUserFollowRepository {
 
   // SELECTS
   /**
-   * 내가 팔로우한 유저 목록
+   * 팔로잉 유저 목록
    * @param userId
    * @param mapperUserfollowListDto
    * @returns
    */
   async findAllByFollowings(
-    userId: number, // 본인 아이디
+    userId: number,
     followId: number,
     mapperUserfollowListDto: MapperUserFollowListDto,
     excludeUserIds?: number[],
   ): Promise<PaginateResponseVo<UserFindOneVo>> {
-    const page = mapperUserfollowListDto.page;
-    const limit = mapperUserfollowListDto.limit;
-    const offset = (page - 1) * limit;
-
     const users = this.mapperUserFollowRepository
       .createQueryBuilder('mapper')
       .innerJoinAndSelect('mapper.following', 'user')
@@ -59,31 +55,26 @@ export class MapperUserFollowRepository {
       });
     }
 
-    users
-      .orderBy('mapper.createdAt', mapperUserfollowListDto.orderBy)
-      .offset(offset)
-      .limit(limit);
-
-    const [items, totalCount] = await users.getManyAndCount();
-    const lasPage = Math.ceil(totalCount / limit);
-
-    const sortedItems = items.map((item) => item.following);
-
-    // 본인 정보 가장 상단 노출
-    const findIndex = sortedItems.findIndex((user) => user.id === userId);
-    if (findIndex !== -1) {
-      sortedItems.unshift(...sortedItems.splice(findIndex, 1));
+    // * 본인 프로필 페이지 아닌 경우에만 적용
+    if (followId !== userId) {
+      users
+        .orderBy(
+          'CASE WHEN mapper.followingId = :followingId THEN 0 ELSE 1 END',
+          ORDER_BY_VALUE.ASC,
+        )
+        .setParameter('followingId', userId);
     }
 
-    return {
-      items: sortedItems,
-      totalCount: totalCount,
-      pageInfo: {
-        page,
-        limit,
-        isLast: page === lasPage ? true : false,
-      },
-    };
+    const [items, totalCount] = await users
+      .Paginate(mapperUserfollowListDto)
+      .getManyAndCount();
+
+    return generatePaginatedResponse(
+      items.map((item) => item.following),
+      totalCount,
+      mapperUserfollowListDto.page,
+      mapperUserfollowListDto.limit,
+    );
   }
 
   // * 팔로잉한 유저
@@ -99,7 +90,7 @@ export class MapperUserFollowRepository {
   }
 
   /**
-   * 나를 팔로우한 유저 목록
+   * 팔로워 유저 목록
    * @param userId
    * @param mapperUserfollowListDto
    * @returns
@@ -110,10 +101,6 @@ export class MapperUserFollowRepository {
     mapperUserfollowListDto: MapperUserFollowListDto,
     excludeUserIds?: number[],
   ): Promise<PaginateResponseVo<UserFindOneVo>> {
-    const page = mapperUserfollowListDto.page;
-    const limit = mapperUserfollowListDto.limit;
-    const offset = (page - 1) * limit;
-
     const users = this.mapperUserFollowRepository
       .createQueryBuilder('mapper')
       .innerJoinAndSelect('mapper.follower', 'user')
@@ -135,31 +122,26 @@ export class MapperUserFollowRepository {
       });
     }
 
-    users
-      .orderBy('mapper.createdAt', mapperUserfollowListDto.orderBy)
-      .offset(offset)
-      .limit(limit);
-
-    const [items, totalCount] = await users.getManyAndCount();
-    const lasPage = Math.ceil(totalCount / limit);
-
-    const sortedItems = items.map((item) => item.follower);
-
-    // 본인 정보 가장 상단 노출
-    const findIndex = sortedItems.findIndex((user) => user.id === userId);
-    if (findIndex !== -1) {
-      sortedItems.unshift(...sortedItems.splice(findIndex, 1));
+    // * 본인 프로필 페이지 아닌 경우에만 적용
+    if (followId !== userId) {
+      users
+        .orderBy(
+          'CASE WHEN user.id = :userId THEN 0 ELSE 1 END',
+          ORDER_BY_VALUE.ASC,
+        )
+        .setParameter('userId', userId);
     }
 
-    return {
-      items: sortedItems,
-      totalCount: totalCount,
-      pageInfo: {
-        page,
-        limit,
-        isLast: page === lasPage ? true : false,
-      },
-    };
+    const [items, totalCount] = await users
+      .Paginate(mapperUserfollowListDto)
+      .getManyAndCount();
+
+    return generatePaginatedResponse(
+      items.map((item) => item.follower),
+      totalCount,
+      mapperUserfollowListDto.page,
+      mapperUserfollowListDto.limit,
+    );
   }
 
   // INSERTS
