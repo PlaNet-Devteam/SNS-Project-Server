@@ -77,7 +77,13 @@ export class UserService {
     const checkEmail = await this.userRepository.findUserByEmail(
       userCreateDto.email,
     );
-    if (checkEmail) throw new BadRequestException();
+    if (checkEmail) throw new BadRequestException('이미 존재하는 이메일입니다');
+
+    const username = await this.userRepository.findUserByUsername(
+      userCreateDto.username,
+    );
+    if (username) throw new BadRequestException('이미 존재하는 유저명입니다');
+
     await this.userRepository.createUser(userCreateDto);
   }
 
