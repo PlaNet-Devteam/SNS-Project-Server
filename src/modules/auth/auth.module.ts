@@ -10,13 +10,12 @@ import { PassportModule } from '@nestjs/passport';
 import { UserLoginHistoryModule } from '../user-login-history/user-login-history.module';
 import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
-import { UserSocialModule } from '../user-social/user-social.module';
 import { GoogleStrategy } from './strategy';
 
 @Module({
   imports: [
     UserModule,
-    // UserSocialModule,
+    RedisModule,
     UserLoginHistoryModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     PassportModule.register({

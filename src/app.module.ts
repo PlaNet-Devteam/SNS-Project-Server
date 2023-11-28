@@ -9,7 +9,6 @@ import {
   MapperUserFollowModule,
   UserBlockModule,
   TagModule,
-  UserSocialModule,
 } from './modules';
 import { UserLoginHistoryModule } from './modules/user-login-history/user-login-history.module';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
@@ -18,12 +17,17 @@ import { MapperFeedTagModule } from './modules/mapper-feed-tag/mapper-feed-tag.m
 
 @Module({
   imports: [
+    RedisModule.forRoot({
+      config: {
+        host: process.env.REDIS_HOST,
+        port: Number(process.env.REDIS_PORT),
+      },
+    }),
     // service modules
     AuthModule,
     UserModule,
     UserBlockModule,
     UserLoginHistoryModule,
-    // UserSocialModule,
     FeedModule,
     CommentModule,
     CommentReplyModule,

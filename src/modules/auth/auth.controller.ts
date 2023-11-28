@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
   Patch,
@@ -12,14 +11,9 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { AuthGoogleDto, AuthLoginDto, ChangePasswordDto } from './dto';
+import { AuthLoginDto, ChangePasswordDto } from './dto';
 import { Request, Response } from 'express';
-import {
-  BaseResponseVo,
-  GoogleAuthGuard,
-  RefreshGuard,
-  UserGuard,
-} from 'src/core';
+import { BaseResponseVo, RefreshGuard, UserGuard } from 'src/core';
 import { AuthTokenVo } from './vo/auth-token.vo';
 import { User } from '../user/user.entity';
 import { UserInfo } from '../../common';
@@ -63,16 +57,21 @@ export class AuthController {
    * @returns
    */
   @Post('google/login')
-  @HttpCode(HttpStatus.OK)
-  public async googleLogin(@Body() token: { token: string }): Promise<void> {
-    console.log('token', token);
-    return this.authService.getGoogleToken(token.token);
-  }
+  @HttpCode(HttpStatus.ACCEPTED)
+  public async googleLogin(
+    @Body() token: { token: string },
+    @Res({ passthrough: true }) response: Response,
+    @Req() request: Request,
+  ) {
+    const userAgentString = request.headers['user-agent'];
+    const agent = useragent.parse(userAgentString) || null;
+    const deviceId =
+      agent.device.family === 'Other' ? 'DESKTOP' : agent.device.family;
 
-  @Get('google/redirect')
-  public async googleRediredt(@Req() request: Request) {
-    const { user } = request;
-    return user;
+    const authVo = await this.authService.googleLogin(token.token, deviceId);
+
+    if (authVo) response.cookie('refresh-token', authVo.refreshToken);
+    return new BaseResponseVo<AuthTokenVo>(authVo);
   }
 
   /**
