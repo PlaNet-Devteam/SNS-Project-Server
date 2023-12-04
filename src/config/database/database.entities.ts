@@ -1,3 +1,5 @@
+import { ChatMessage } from 'src/modules/chat/entitys/chat-message.entity';
+import { ChatRoom } from 'src/modules/chat/entitys/chat-room.entity';
 import { CommentReply } from 'src/modules/comment-reply/comment-reply.entity';
 import { Comment } from 'src/modules/comment/comment.entity';
 import { FeedBookmark } from 'src/modules/feed-bookmark/feed-bookmark.entity';
@@ -26,4 +28,6 @@ export const Entities = [
   MapperUserFollow,
   MapperFeedTag,
   Tag,
+  ChatRoom,
+  ChatMessage,
 ];
