@@ -14,6 +14,10 @@ import { UserLoginHistoryModule } from './modules/user-login-history/user-login-
 import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { ENVIRONMENT, CacheClusterModule } from './config';
 import { MapperFeedTagModule } from './modules/mapper-feed-tag/mapper-feed-tag.module';
+import { RoomModule } from './modules/room/room.module';
+import { MapperUserRoomModule } from './modules/mapper-user-room/mapper-user-room.module';
+import { MessageModule } from './modules/message/message.module';
+import { BaseGatewayModule } from './gateway/base-gateway.module';
 
 @Module({
   imports: [
@@ -31,10 +35,14 @@ import { MapperFeedTagModule } from './modules/mapper-feed-tag/mapper-feed-tag.m
     FeedModule,
     CommentModule,
     CommentReplyModule,
-    ChatModule,
+    // ChatModule,
+    BaseGatewayModule,
     MapperUserFollowModule,
     MapperFeedTagModule,
+    MapperUserRoomModule,
     TagModule,
+    RoomModule,
+    MessageModule,
   ],
   controllers: [],
   providers: [],
