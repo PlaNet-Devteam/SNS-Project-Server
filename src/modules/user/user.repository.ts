@@ -42,7 +42,7 @@ export class UserRepository {
     userListDto?: UserListDto,
     excludeUserIds?: number[],
   ): Promise<PaginateResponseVo<UserFindOneVo>> {
-    const users = this.userRepository
+    let users = this.userRepository
       .createQueryBuilder('user')
       .where(
         new Brackets((qb) => {
@@ -53,21 +53,22 @@ export class UserRepository {
       )
       .andWhere('user.delYn = :delYn', { delYn: YN.N });
 
-    if (excludeUserIds.length > 0) {
-      users.andWhere('user.id NOT IN (:...userId)', {
-        userId: [...excludeUserIds],
+    if (excludeUserIds && excludeUserIds.length > 0) {
+      users.andWhere('user.id NOT IN (:...excludeUserIds)', {
+        excludeUserIds: excludeUserIds,
       });
     }
 
-    users
+    users = users
       .orderBy(
         'CASE WHEN user.id = :userId THEN 0 ELSE 1 END',
         ORDER_BY_VALUE.ASC,
       )
-      .setParameter('userId', Number(userListDto.viewerId))
-      .Paginate(userListDto);
+      .setParameter('userId', Number(userListDto.viewerId));
 
-    const [items, totalCount] = await users.getManyAndCount();
+    const [items, totalCount] = await users
+      .Paginate(userListDto)
+      .getManyAndCount();
 
     return generatePaginatedResponse(
       items,
