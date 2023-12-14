@@ -35,6 +35,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.sockets
       .to(chatUserGatewayDto.roomId)
       .emit('message', chatUserGatewayDto);
+    this.chatService.saveChatDataToDatabase(chatUserGatewayDto);
   }
 
   @SubscribeMessage('join_room')
@@ -49,30 +50,41 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('create_room')
-  createRoom(
+  async createRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { myName: string; otherUserName: string },
+    @MessageBody() data: { myId: number; otherUserId: number },
   ) {
-    const { myName, otherUserName } = data;
-    const roomId = this.chatService.createOrJoinChatRoom(myName, otherUserName);
+    const { myId, otherUserId } = data;
+    const roomId = await this.chatService.createOrJoinChatRoom(
+      myId,
+      otherUserId,
+    );
     this.chatService.createRoom(roomId, client);
     this.server.sockets.to(roomId).emit('create_room', `${roomId}`);
   }
 
   @SubscribeMessage('get_room_list')
-  handleGetRoomList(@ConnectedSocket() client: Socket) {
-    const allRoomIds = this.chatService.getAllRoomIds();
-    console.log(allRoomIds);
+  async handleGetRoomList(@ConnectedSocket() client: Socket) {
+    const allRoomIds = await this.chatService.findAllRooms();
     client.emit('get_room_list', allRoomIds);
   }
 
   @SubscribeMessage('get_other_user')
-  handleGetOtherUser(
+  async handleGetOtherUser(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string; user1Id: string },
+    @MessageBody() data: { roomId: string; user1Id: number },
   ) {
     const { roomId, user1Id } = data;
-    const otherUser = this.chatService.findUserInRoom(roomId, user1Id);
+    const otherUser = await this.chatService.findUserInRoom(roomId, user1Id);
     client.emit('get_other_user', `${otherUser}`);
+  }
+
+  @SubscribeMessage('get_chat_data')
+  async handleGetChatData(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string },
+  ) {
+    const chatData = await this.chatService.findChatData(data.roomId);
+    client.emit('get_chat_data', chatData);
   }
 }
