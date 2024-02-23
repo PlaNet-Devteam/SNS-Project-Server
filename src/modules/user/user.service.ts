@@ -36,6 +36,7 @@ export class UserService {
     const blockedMeUsers = await this.userBlockRepository.findAllByBlockedIds(
       userListDto.viewerId,
     );
+    console.log('blockedMeUsers', blockedMeUsers);
     return await this.userRepository.findAll(userListDto, blockedMeUsers);
   }
 

@@ -75,14 +75,14 @@ export class UserGuard extends AuthGuard('jwt') {
       Number(process.env.REDIS_PORT),
       process.env.REDIS_HOST,
     );
-    const cache = await newRedis.get(
-      `${cacheConvention.user.refreshToken}${user.id}`,
-    );
-    if (!cache)
-      throw new UnauthorizedException({
-        error: RESPONSE_STATUS.NO_REFRESH_TOKEN,
-        msg: 'No refresh token detected!',
-      });
+    // const cache = await newRedis.get(
+    //   `${cacheConvention.user.refreshToken}${user.id}`,
+    // );
+    // if (!cache)
+    //   throw new UnauthorizedException({
+    //     error: RESPONSE_STATUS.NO_REFRESH_TOKEN,
+    //     msg: 'No refresh token detected!',
+    //   });
 
     return true;
   }
