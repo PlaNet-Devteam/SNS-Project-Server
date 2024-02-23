@@ -24,9 +24,4 @@ export class MessageCreateDto extends BaseDto<MessageCreateDto> {
   @IsNotEmpty()
   @Expose()
   message: string;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  @Expose()
-  createdAt: Date;
 }

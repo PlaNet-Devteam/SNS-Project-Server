@@ -30,7 +30,6 @@ export class MessageRepository {
             userId: message.userId,
             roomId: message.roomId,
             message: message.message,
-            createdAt: message.createdAt,
           });
           newMessage = await this.messageRepository.save(newMessage);
           console.log('저장', newMessage);

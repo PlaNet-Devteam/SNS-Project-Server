@@ -10,7 +10,7 @@ interface ChatRoomInfo {
 
 @Injectable()
 export class ChatService {
-  private chatRooms: Map<string, Set<Socket>> = new Map();
+  private chatRooms: Map<string, Set<any>> = new Map();
   private chatRoomInfoList: ChatRoomInfo[] = [];
   getHello(): string {
     return 'Hello World!';
