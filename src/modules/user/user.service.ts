@@ -5,14 +5,40 @@ import {
 } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { UserFindOneVo } from './vo';
-import { UserCreateDto } from './dto';
-import { User } from './user.entity';
+import {
+  UserCreateDto,
+  UserListDto,
+  UserUpdateDto,
+  UserUpdateStatusDto,
+} from './dto';
+import { UserDeleteDto } from './dto/user-delete.dto';
+import { PaginateResponseVo } from 'src/core';
+import { UserBlockRepository } from '../user-block/user-block.repository';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly userBlockRepository: UserBlockRepository,
+  ) {}
 
   // GET SERVICES
+
+  /**
+   *
+   * @param userListDto
+   * @returns
+   */
+  public async findAll(
+    userListDto?: UserListDto,
+  ): Promise<PaginateResponseVo<UserFindOneVo>> {
+    // * 나를 차단한 유저 검색 제외
+    const blockedMeUsers = await this.userBlockRepository.findAllByBlockedIds(
+      userListDto.viewerId,
+    );
+    console.log('blockedMeUsers', blockedMeUsers);
+    return await this.userRepository.findAll(userListDto, blockedMeUsers);
+  }
 
   /**
    *
@@ -22,6 +48,23 @@ export class UserService {
   public async findOne(id: number): Promise<UserFindOneVo> {
     const user = await this.userRepository.findOneUser(id);
     if (!user) throw new NotFoundException();
+    return user;
+  }
+
+  /**
+   *
+   * @param username
+   * @returns UserFindOneVo
+   */
+  public async findUserByUsername(
+    username: string,
+    viewerId?: number,
+  ): Promise<UserFindOneVo> {
+    const user = await this.userRepository.findUserByUsername(
+      username,
+      viewerId,
+    );
+    if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
     return user;
   }
 
@@ -35,7 +78,68 @@ export class UserService {
     const checkEmail = await this.userRepository.findUserByEmail(
       userCreateDto.email,
     );
-    if (checkEmail) throw new BadRequestException();
+    if (checkEmail) throw new BadRequestException('이미 존재하는 이메일입니다');
+
+    const username = await this.userRepository.findUserByUsername(
+      userCreateDto.username,
+    );
+    if (username) throw new BadRequestException('이미 존재하는 유저명입니다');
+
     await this.userRepository.createUser(userCreateDto);
+  }
+
+  /**
+   *  사용자 수정
+   * @param userUpdateDto
+   */
+  public async updateUser(id: number, userUpdateDto: UserUpdateDto) {
+    const user = await this.userRepository.findOneUser(id);
+    if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
+    await this.userRepository.updateUser(id, userUpdateDto);
+  }
+
+  /**
+   *  유저 상태 변경
+   * @param id
+   * @param userUpdateStatusDto
+   * @returns
+   */
+  public async updateUserStatus(
+    id: number,
+    userUpdateStatusDto: UserUpdateStatusDto,
+  ) {
+    const user = await this.userRepository.findOneUser(id);
+    if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
+
+    return this.userRepository.updateUserStatus(id, userUpdateStatusDto);
+  }
+
+  /**
+   *  계정 활성화
+   * @param id
+   * @returns
+   */
+  public async activateUser(id: number) {
+    const user = await this.userRepository.findOneUser(id);
+    if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
+
+    return this.userRepository.activateUser(id);
+  }
+
+  /**
+   *  계정 삭제
+   * @param id
+   * @param userDeleteDto
+   * @returns
+   */
+  public async deleteUser(id: number, userDeleteDto: UserDeleteDto) {
+    const user = await this.userRepository.findOneUser(id);
+    if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
+
+    return this.userRepository.deleteUser(id, userDeleteDto);
+  }
+
+  public async findAllUsers() {
+    return await this.userRepository.findAllUsers();
   }
 }

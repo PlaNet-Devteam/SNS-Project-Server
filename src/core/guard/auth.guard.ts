@@ -60,7 +60,7 @@ export class UserGuard extends AuthGuard('jwt') {
       });
     }
     // check refresh and access token user in redis
-    if (!this.loggingOut) this.checkRedis(user);
+    // if (!this.loggingOut) this.checkRedis(user);
     return user;
   }
 

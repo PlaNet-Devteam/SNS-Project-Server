@@ -1,10 +1,11 @@
 import { IsEmail, IsEnum, IsNotEmpty } from 'class-validator';
-import { GENDER, USER_STATUS } from 'src/common';
+import { GENDER, USER_STATUS, YN } from 'src/common';
 import { BaseUpdateEntity } from 'src/core';
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, JoinTable, ManyToMany, OneToMany } from 'typeorm';
 import { UserHistory } from '../user-history/user-history.entity';
 import { UserLoginHistory } from '../user-login-history/user-login-history.entity';
 import { Exclude } from 'class-transformer';
+import { Room } from '../room/room.entity';
 
 @Entity({ name: 'user' })
 export class User extends BaseUpdateEntity<User> {
@@ -79,6 +80,13 @@ export class User extends BaseUpdateEntity<User> {
   })
   inactiveAt?: Date;
 
+  @Column({
+    name: 'del_yn',
+    default: YN.N,
+  })
+  @IsEnum(YN)
+  delYn?: YN;
+
   @OneToMany((type) => UserHistory, (userHistory) => userHistory.user)
   userHistory?: UserHistory[];
 
@@ -87,4 +95,24 @@ export class User extends BaseUpdateEntity<User> {
     (userLoginHistory) => userLoginHistory.user,
   )
   userLoginHistory?: UserLoginHistory[];
+
+  @ManyToMany((type) => Room, (room) => room.users)
+  @JoinTable({
+    name: 'mapper_user_room',
+    joinColumn: {
+      name: 'user_id',
+    },
+    inverseJoinColumn: {
+      name: 'room_id',
+    },
+  })
+  rooms?: Room[];
+
+  // no database
+
+  followingIds?: number[];
+
+  followerIds?: number[];
+
+  isBlockedByViewer?: boolean;
 }

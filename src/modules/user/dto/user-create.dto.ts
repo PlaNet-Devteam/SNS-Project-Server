@@ -23,33 +23,39 @@ export class UserCreateDto
 
   @ApiProperty()
   @IsNotEmpty()
-  @MinLength(3)
+  @MinLength(6)
   @Expose()
   username: string;
 
-  // TODO:
-  // profileImage
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Transform((value: any) =>
+    value.value === '' ? (value.value = null) : value.value,
+  )
+  @Expose()
+  profileImage?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @MinLength(3)
+  @MinLength(2)
   @Transform((value: any) =>
     value.value === '' ? (value.value = null) : value.value,
   )
   @Expose()
   nickname?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsPassword()
-  @IsNotEmpty()
+  @IsOptional()
   @Expose()
-  password: string;
+  password?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsPassword()
+  @IsOptional()
   @IsEqualTo('password')
   @Expose()
-  passwordConfirm: string;
+  passwordConfirm?: string;
 
   @ApiProperty({ enum: USER_STATUS })
   @IsEnum(USER_STATUS, { each: true })
