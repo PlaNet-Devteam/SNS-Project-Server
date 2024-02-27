@@ -3,7 +3,7 @@ import { UserModule } from '../user/user.module';
 import { HashService } from './hash.service';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { AuthService } from './auth.service';
-import { RedisModule } from '@liaoliaots/nestjs-redis';
+// import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { ENVIRONMENT, JwtConfigService } from 'src/config';
 import { CacheClusterModule } from 'src/config/cache/cache.config.module';
 import { PassportModule } from '@nestjs/passport';
@@ -15,7 +15,7 @@ import { GoogleStrategy } from './strategy';
 @Module({
   imports: [
     UserModule,
-    RedisModule,
+    // RedisModule,
     UserLoginHistoryModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     PassportModule.register({

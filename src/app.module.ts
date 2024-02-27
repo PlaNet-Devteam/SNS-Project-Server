@@ -5,13 +5,13 @@ import {
   CommentReplyModule,
   FeedModule,
   UserModule,
-  ChatModule,
+  // ChatModule,
   MapperUserFollowModule,
   UserBlockModule,
   TagModule,
 } from './modules';
 import { UserLoginHistoryModule } from './modules/user-login-history/user-login-history.module';
-import { RedisModule } from '@liaoliaots/nestjs-redis';
+// import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { ENVIRONMENT, CacheClusterModule } from './config';
 import { MapperFeedTagModule } from './modules/mapper-feed-tag/mapper-feed-tag.module';
 import { RoomModule } from './modules/room/room.module';
@@ -21,12 +21,12 @@ import { BaseGatewayModule } from './gateway/base-gateway.module';
 
 @Module({
   imports: [
-    RedisModule.forRoot({
-      config: {
-        host: process.env.REDIS_HOST,
-        port: Number(process.env.REDIS_PORT),
-      },
-    }),
+    // RedisModule.forRoot({
+    //   config: {
+    //     host: process.env.REDIS_HOST,
+    //     port: Number(process.env.REDIS_PORT),
+    //   },
+    // }),
     // service modules
     AuthModule,
     UserModule,
