@@ -95,7 +95,10 @@ async function bootstrap() {
   app.use(passport.session());
 
   app.enableShutdownHooks();
-  await app.listen(process.env.SERVER_PORT || 4300, '0.0.0.0');
+  await app.listen(
+    process.env.SERVER_PORT || 4300,
+    process.env.SERVER_HOST || '0.0.0.0',
+  );
 
   // display server url
   const url = await app.getUrl();
