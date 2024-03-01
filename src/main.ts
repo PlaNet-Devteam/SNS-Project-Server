@@ -42,7 +42,7 @@ async function bootstrap() {
 
   // CORS 설장
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://planet-sns.com'], // CORS variables, 배열로 지정하는게 맞음. 그리고 이 부분도 나중에 따로 뺄 수 있음
+    origin: ['http://localhost:3000', process.env.CLIENT_HOST], // CORS variables, 배열로 지정하는게 맞음. 그리고 이 부분도 나중에 따로 뺄 수 있음
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     preflightContinue: false,
     optionsSuccessStatus: 204,
