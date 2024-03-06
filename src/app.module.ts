@@ -9,6 +9,7 @@ import {
   MapperUserFollowModule,
   UserBlockModule,
   TagModule,
+  HealthCheckModule,
 } from './modules';
 import { UserLoginHistoryModule } from './modules/user-login-history/user-login-history.module';
 // import { RedisModule } from '@liaoliaots/nestjs-redis';
@@ -43,6 +44,7 @@ import { BaseGatewayModule } from './gateway/base-gateway.module';
     TagModule,
     RoomModule,
     MessageModule,
+    HealthCheckModule,
   ],
   controllers: [],
   providers: [],

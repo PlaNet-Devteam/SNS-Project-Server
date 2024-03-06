@@ -9,6 +9,7 @@ export * from './comment-reply/comment-reply.module';
 export * from './chat/chat.module';
 export * from './feed/feed.module';
 export * from './feed-like/feed-like.module';
+export * from './health-check/health-check.module';
 export * from './mapper-user-follow/mapper-user-follow.module';
 export * from './mapper-feed-tag/mapper-feed-tag.module';
 export * from './mapper-user-room/mapper-user-room.module';
