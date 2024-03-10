@@ -15,6 +15,8 @@ import helmet from 'helmet';
 import { ENVIRONMENT, dataSource } from './config';
 import * as cookieParser from 'cookie-parser';
 import { ClassTransformOptions } from 'class-transformer';
+import { IoAdapter } from '@nestjs/platform-socket.io';
+import { useContainer } from 'class-validator';
 
 // const debug = Debug(`app:${basename(__dirname)}:${basename(__filename)}`);
 
@@ -64,6 +66,10 @@ async function bootstrap() {
     });
   }
 
+  // websocket 설정
+  app.useWebSocketAdapter(new IoAdapter(app));
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
+
   app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({
@@ -91,6 +97,7 @@ async function bootstrap() {
       },
     }),
   );
+
   app.use(passport.initialize());
   app.use(passport.session());
 
