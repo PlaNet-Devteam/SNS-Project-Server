@@ -39,8 +39,10 @@ export class RoomRepository {
       .where('room.id = :id', { id })
       .getOne();
 
-    for (const message of room.messages) {
-      message.user = await User.findOne({ where: { id: message.userId } });
+    if (room.messages && room.messages.length > 0) {
+      for (const message of room.messages) {
+        message.user = await User.findOne({ where: { id: message.userId } });
+      }
     }
 
     return room;
