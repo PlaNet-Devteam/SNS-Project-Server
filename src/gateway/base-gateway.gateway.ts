@@ -7,7 +7,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
-@WebSocketGateway(8080)
+@WebSocketGateway()
 export class BaseGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private logger: Logger = new Logger('BaseGateway');
 
