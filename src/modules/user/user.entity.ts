@@ -18,7 +18,9 @@ export class User extends BaseUpdateEntity<User> {
   @Column({
     name: 'email',
   })
-  @IsNotEmpty()
+  @IsNotEmpty({
+    message: '이메일은 필수 항목 입니다',
+  })
   @IsEmail()
   email: string;
 

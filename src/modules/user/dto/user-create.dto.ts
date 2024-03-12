@@ -16,14 +16,25 @@ export class UserCreateDto
   implements Partial<User>
 {
   @ApiProperty()
-  @IsNotEmpty()
-  @IsEmail()
+  @IsNotEmpty({
+    message: '이메일은 필수 항목 입니다',
+  })
+  @IsEmail(
+    {},
+    {
+      message: '이메일 형식이여야 합니다',
+    },
+  )
   @Expose()
   email: string;
 
   @ApiProperty()
-  @IsNotEmpty()
-  @MinLength(6)
+  @IsNotEmpty({
+    message: '사용자명은 필수 항목 입니다 ',
+  })
+  @MinLength(6, {
+    message: '사용자명은 6자 이상 작성해주세요',
+  })
   @Expose()
   username: string;
 
@@ -37,7 +48,9 @@ export class UserCreateDto
 
   @ApiPropertyOptional()
   @IsOptional()
-  @MinLength(2)
+  @MinLength(2, {
+    message: '닉네임은 2자이상 작성해주세요',
+  })
   @Transform((value: any) =>
     value.value === '' ? (value.value = null) : value.value,
   )
@@ -45,15 +58,17 @@ export class UserCreateDto
   nickname?: string;
 
   @ApiPropertyOptional()
-  @IsPassword()
+  @IsPassword({}, '비밀번호')
   @IsOptional()
   @Expose()
   password?: string;
 
   @ApiPropertyOptional()
-  @IsPassword()
+  @IsPassword({}, '비밀번호 확인')
   @IsOptional()
-  @IsEqualTo('password')
+  @IsEqualTo('password', {
+    message: '비밀번호가 일치하지 않습니다',
+  })
   @Expose()
   passwordConfirm?: string;
 
