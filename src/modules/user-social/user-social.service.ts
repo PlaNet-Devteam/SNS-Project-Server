@@ -34,7 +34,7 @@ export class UserSocialService {
     const checkUserId = await this.userSocialRepository.findOneByUserId(
       userCreateDto.userId,
     );
-    if (checkUserId) throw new BadRequestException();
+    if (checkUserId) throw new BadRequestException('이미 존재하는 유저입니다');
     await this.userSocialRepository.createUserSocial(userCreateDto);
   }
 }
