@@ -10,7 +10,7 @@ export class UserDeleteDto
   implements Partial<User>
 {
   @ApiProperty()
-  @IsPassword()
+  @IsPassword({}, '비밀번호')
   @IsNotEmpty()
   @Expose()
   password: string;

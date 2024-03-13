@@ -226,7 +226,7 @@ export class UserRepository {
     hashedPassword: string,
   ): Promise<boolean> {
     const check = await this.hashService.validate(password, hashedPassword);
-    if (!check) throw new BadRequestException('password does not match');
+    if (!check) throw new BadRequestException('비밀번호가 올바르지 않습니다');
     return check;
   }
 
