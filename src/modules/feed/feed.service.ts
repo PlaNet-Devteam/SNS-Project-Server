@@ -49,6 +49,16 @@ export class FeedService {
     return feeds;
   }
 
+  public async findAllByTag(
+    feedListDto?: FeedListDto,
+  ): Promise<PaginateResponseVo<FeedFindOneVo>> {
+    const feeds = await this.feedRepository.findAllByTag(feedListDto);
+
+    if (!feeds) throw new NotFoundException();
+
+    return feeds;
+  }
+
   public async findAllByFollowing(
     user: User,
     feedListDto?: FeedListDto,
@@ -108,8 +118,8 @@ export class FeedService {
    * @param id
    * @returns FeedFindOneVo
    */
-  public async findOneByUser(user: User, id: number): Promise<FeedFindOneVo> {
-    const feed = await this.feedRepository.findOneByUser(user, id);
+  public async findOneByUser(id: number): Promise<FeedFindOneVo> {
+    const feed = await this.feedRepository.findOneByUser(id);
     if (!feed) throw new NotFoundException();
     return feed;
   }

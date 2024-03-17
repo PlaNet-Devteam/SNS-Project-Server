@@ -45,6 +45,16 @@ export class FeedController {
     );
   }
 
+  @Get('/feed/tag')
+  @HttpCode(HttpStatus.OK)
+  public async findAllByTag(
+    @Query() feedListDto: FeedListDto,
+  ): Promise<BaseResponseVo<PaginateResponseVo<FeedFindOneVo>>> {
+    return new BaseResponseVo<PaginateResponseVo<FeedFindOneVo>>(
+      await this.feedService.findAllByTag(feedListDto),
+    );
+  }
+
   @Get('/feed/following')
   @HttpCode(HttpStatus.OK)
   @UseGuards(new UserGuard())
@@ -94,13 +104,9 @@ export class FeedController {
 
   @Get('/feed/:id([0-9]+)')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(new UserGuard())
-  public async findOneFeed(
-    @UserInfo() user: User,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
+  public async findOneFeed(@Param('id', ParseIntPipe) id: number) {
     return new BaseResponseVo<FeedFindOneVo>(
-      await this.feedService.findOneByUser(user, id),
+      await this.feedService.findOneByUser(id),
     );
   }
 

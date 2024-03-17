@@ -84,6 +84,50 @@ export class FeedRepository {
   }
 
   /**
+   * 전체 피드 목록 (태그별)
+   * @returns
+   */
+  public async findAllByTag(
+    feedListDto?: FeedListDto,
+  ): Promise<PaginateResponseVo<FeedFindOneVo>> {
+    const feeds = this.feedRepository
+      .createQueryBuilder('feed')
+      .innerJoinAndSelect('feed.user', 'user')
+      .leftJoinAndSelect('feed.tags', 'tags')
+      .andWhere('feed.displayYn = :displayYn', { displayYn: YN.Y })
+      .andWhere('feed.status = :status', { status: FEED_STATUS.ACTIVE });
+
+    let filteredFeeds = await feeds
+      .orderBy('feed.createdAt', ORDER_BY_VALUE.DESC)
+      .getMany();
+
+    if (feedListDto.tagName && feedListDto.tagName.length > 0) {
+      filteredFeeds = filteredFeeds.filter((feed) =>
+        feed.tags.some((tag) => tag.tagName === feedListDto.tagName),
+      );
+    }
+
+    const offset = (feedListDto.page - 1) * feedListDto.limit;
+    const paginatedFeeds = filteredFeeds.slice(
+      offset,
+      offset + feedListDto.limit,
+    );
+
+    const [items, totalCount] = [paginatedFeeds, filteredFeeds.length];
+
+    for (const item of filteredFeeds) {
+      await this.processFeedItem(item);
+    }
+
+    return generatePaginatedResponse(
+      items,
+      totalCount,
+      feedListDto.page,
+      feedListDto.limit,
+    );
+  }
+
+  /**
    * 전체 피드 목록 (내가 작성한 피드 및 내가 팔로잉한 유저의 피드)
    * @returns
    */
@@ -202,17 +246,14 @@ export class FeedRepository {
    * @param id
    * @returns FeedFindOneVo
    */
-  public async findOneByUser(
-    user: User,
-    feedId: number,
-  ): Promise<FeedFindOneVo> {
+  public async findOneByUser(feedId: number): Promise<FeedFindOneVo> {
     const feed = await this.feedRepository
       .createQueryBuilder('feed')
       .innerJoinAndSelect('feed.user', 'user')
       .where('feed.id = :id', { id: feedId })
       .getOne();
 
-    await this.processFeedItem(feed, user.id);
+    await this.processFeedItem(feed);
 
     return feed;
   }
