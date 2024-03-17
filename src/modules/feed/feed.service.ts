@@ -107,7 +107,7 @@ export class FeedService {
    * @param id
    * @returns FeedFindOneVo
    */
-  public async findOne(id: number): Promise<FeedFindOneVo> {
+  public async findOneFeed(id: number): Promise<FeedFindOneVo> {
     const feed = await this.feedRepository.findOneFeed(id);
     if (!feed) throw new NotFoundException();
     return feed;
@@ -118,8 +118,8 @@ export class FeedService {
    * @param id
    * @returns FeedFindOneVo
    */
-  public async findOneByUser(id: number): Promise<FeedFindOneVo> {
-    const feed = await this.feedRepository.findOneByUser(id);
+  public async findOneByUser(user: User, id: number): Promise<FeedFindOneVo> {
+    const feed = await this.feedRepository.findOneByUser(user, id);
     if (!feed) throw new NotFoundException();
     return feed;
   }

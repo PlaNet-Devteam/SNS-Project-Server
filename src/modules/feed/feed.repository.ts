@@ -246,14 +246,17 @@ export class FeedRepository {
    * @param id
    * @returns FeedFindOneVo
    */
-  public async findOneByUser(feedId: number): Promise<FeedFindOneVo> {
+  public async findOneByUser(
+    user: User,
+    feedId: number,
+  ): Promise<FeedFindOneVo> {
     const feed = await this.feedRepository
       .createQueryBuilder('feed')
       .innerJoinAndSelect('feed.user', 'user')
       .where('feed.id = :id', { id: feedId })
       .getOne();
 
-    await this.processFeedItem(feed);
+    await this.processFeedItem(feed, user.id);
 
     return feed;
   }

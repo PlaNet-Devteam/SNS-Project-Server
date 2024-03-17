@@ -106,7 +106,25 @@ export class FeedController {
   @HttpCode(HttpStatus.OK)
   public async findOneFeed(@Param('id', ParseIntPipe) id: number) {
     return new BaseResponseVo<FeedFindOneVo>(
-      await this.feedService.findOneByUser(id),
+      await this.feedService.findOneFeed(id),
+    );
+  }
+
+  /**
+   * 피드아이디로 상세 호출
+   * @param id
+   * @returns
+   */
+
+  @Get('/user/feed/:id([0-9]+)')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(new UserGuard())
+  public async findOneByUser(
+    @UserInfo() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return new BaseResponseVo<FeedFindOneVo>(
+      await this.feedService.findOneByUser(user, id),
     );
   }
 
