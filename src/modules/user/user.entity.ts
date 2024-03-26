@@ -6,6 +6,7 @@ import { UserHistory } from '../user-history/user-history.entity';
 import { UserLoginHistory } from '../user-login-history/user-login-history.entity';
 import { Exclude } from 'class-transformer';
 import { Room } from '../room/room.entity';
+import * as errors from '../../locales/kr/errors.json';
 
 @Entity({ name: 'user' })
 export class User extends BaseUpdateEntity<User> {
@@ -19,7 +20,7 @@ export class User extends BaseUpdateEntity<User> {
     name: 'email',
   })
   @IsNotEmpty({
-    message: '이메일은 필수 항목 입니다',
+    message: errors.auth.requiredEmail,
   })
   @IsEmail()
   email: string;

@@ -11,6 +11,7 @@ import { PaginateResponseVo } from 'src/core';
 import { UserFindOneVo } from '../user/vo';
 import { UserBlockRepository } from '../user-block/user-block.repository';
 import { User } from '../user/user.entity';
+import * as errors from '../../locales/kr/errors.json';
 
 @Injectable()
 export class MapperUserFollowService {
@@ -36,8 +37,7 @@ export class MapperUserFollowService {
     );
     const excludeUserIds = [...blockerUsers, ...blockedMeUsers];
 
-    if (!profileUser)
-      throw new NotFoundException('존재하지 않는 사용자 입니다');
+    if (!profileUser) throw new NotFoundException(errors.user.notFound);
     return await this.mapperUserFollowRepository.findAllByFollowings(
       user.id,
       profileUser.id,
@@ -52,8 +52,7 @@ export class MapperUserFollowService {
     mapperUserfollowListDto: MapperUserFollowListDto,
   ): Promise<PaginateResponseVo<UserFindOneVo>> {
     const profileUser = await this.userRepository.findUserByUsername(username);
-    if (!profileUser)
-      throw new NotFoundException('존재하지 않는 사용자 입니다');
+    if (!profileUser) throw new NotFoundException(errors.user.notFound);
 
     // * 차단한 유저 혹은 나를 차단한 유저 검색 제외
     const blockerUsers = await this.userBlockRepository.findAllByBlockerIds(
@@ -78,8 +77,7 @@ export class MapperUserFollowService {
     const followingUser = this.userRepository.findOneUser(
       mapperUserFollowCreateDto.followingId,
     );
-    if (!followingUser)
-      throw new NotFoundException('존재하지 않는 사용자 입니다');
+    if (!followingUser) throw new NotFoundException(errors.user.notFound);
     return this.mapperUserFollowRepository.createMapperUserFollow(
       mapperUserFollowCreateDto,
     );
@@ -91,8 +89,7 @@ export class MapperUserFollowService {
     const followingUser = this.userRepository.findOneUser(
       mapperUserFollowDeleteDto.followingId,
     );
-    if (!followingUser)
-      throw new NotFoundException('존재하지 않는 사용자 입니다');
+    if (!followingUser) throw new NotFoundException(errors.user.notFound);
     return this.mapperUserFollowRepository.deleteMapperUserFollow(
       mapperUserFollowDeleteDto,
     );

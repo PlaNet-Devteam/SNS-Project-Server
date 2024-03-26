@@ -9,6 +9,7 @@ import { UserRepository } from '../user/user.repository';
 import { MapperUserFollowRepository } from '../mapper-user-follow/mapper-user-follow.repository';
 import { MapperUserFollowDeleteDto } from '../mapper-user-follow/dto';
 import { USER_BLOCK } from 'src/common';
+import * as errors from '../../locales/kr/errors.json';
 
 @Injectable()
 export class UserBlockService {
@@ -34,8 +35,7 @@ export class UserBlockService {
     const newBlockUser = await this.userRepository.findOneUser(
       userBlockCreateDto.blockedUserId,
     );
-    if (!newBlockUser)
-      throw new NotFoundException('존재 하지 않는 사용자 입니다');
+    if (!newBlockUser) throw new NotFoundException(errors.user.notFound);
 
     // * 차단한 유저 팔로잉 취소
     const isfollowing = await this.mapperUserFollowRepository.findOne(
@@ -94,7 +94,7 @@ export class UserBlockService {
       userBlockCreateDto.blockedUserId,
     );
 
-    if (!blcokedUser) throw new BadRequestException('잘못된 요청입니다');
+    if (!blcokedUser) throw new NotFoundException(errors.user.notFound);
     await this.userBlockRepository.deleteUserBlock(userBlockCreateDto);
   }
 }

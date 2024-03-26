@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 import { Expose, Transform } from 'class-transformer';
 import { GENDER } from 'src/common';
+import * as errors from '../../../locales/kr/errors.json';
 
 export class UserUpdateDto
   extends BaseDto<UserUpdateDto>
@@ -17,7 +18,7 @@ export class UserUpdateDto
 {
   @ApiProperty()
   @IsNotEmpty()
-  @MinLength(2, { message: '닉네임은 2글자 이상 작성해주세요' })
+  @MinLength(2, { message: errors.auth.invalidNickname })
   @Transform((value: any) =>
     value.value === '' ? (value.value = null) : value.value,
   )

@@ -1,11 +1,13 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { UserSocialRepository } from './user-social.repository';
 import { UserSocialFindOneVo } from './vo';
 import { UserSocialCreateDto } from './dto';
+import * as errors from '../../locales/kr/errors.json';
 
 @Injectable()
 export class UserSocialService {
@@ -20,7 +22,7 @@ export class UserSocialService {
    */
   public async findOne(id: number): Promise<UserSocialFindOneVo> {
     const user = await this.userSocialRepository.findOneByUserId(id);
-    if (!user) throw new NotFoundException();
+    if (!user) throw new NotFoundException(errors.user.notFound);
     return user;
   }
 
@@ -34,7 +36,7 @@ export class UserSocialService {
     const checkUserId = await this.userSocialRepository.findOneByUserId(
       userCreateDto.userId,
     );
-    if (checkUserId) throw new BadRequestException('이미 존재하는 유저입니다');
+    if (checkUserId) throw new ConflictException(errors.user.alreadyUser);
     await this.userSocialRepository.createUserSocial(userCreateDto);
   }
 }

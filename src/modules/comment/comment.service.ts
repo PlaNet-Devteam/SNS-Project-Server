@@ -5,6 +5,7 @@ import { CommentCreateDto, CommentListDto, CommentUpdateDto } from './dto';
 import { FeedRepository } from '../feed/feed.repository';
 import { PaginateResponseVo } from 'src/core';
 import { CommentFindOneVo } from './vo';
+import * as errors from '../../locales/kr/errors.json';
 
 @Injectable()
 export class CommentService {
@@ -28,7 +29,7 @@ export class CommentService {
       feedId,
       commentListDto,
     );
-    if (!comments) throw new NotFoundException();
+    if (!comments) throw new NotFoundException(errors.comment.notFound);
     return comments;
   }
 
@@ -39,7 +40,7 @@ export class CommentService {
    */
   public async findOne(comemntId: number): Promise<CommentFindOneVo> {
     const comment = await this.commentRepository.findOneComment(comemntId);
-    if (!comment) throw new NotFoundException();
+    if (!comment) throw new NotFoundException(errors.comment.notFound);
     return comment;
   }
 
@@ -58,7 +59,7 @@ export class CommentService {
     comemntCreateDto: CommentCreateDto,
   ): Promise<Comment> {
     const feed = await this.feedRepository.findOneFeed(feedId);
-    if (!feed) throw new NotFoundException();
+    if (!feed) throw new NotFoundException(errors.feed.notFound);
 
     return await this.commentRepository.createComemnt(
       userId,
@@ -72,7 +73,7 @@ export class CommentService {
     comemntUpdateDto: CommentUpdateDto,
   ): Promise<CommentFindOneVo> {
     const comment = await this.commentRepository.findOneComment(commentId);
-    if (!comment) throw new NotFoundException();
+    if (!comment) throw new NotFoundException(errors.comment.notFound);
 
     return await this.commentRepository.updateComemnt(
       commentId,
@@ -88,7 +89,7 @@ export class CommentService {
    */
   async deleteComemnt(feedId: number, commentId: number) {
     const feed = await this.feedRepository.findOneFeed(feedId);
-    if (!feed) throw new NotFoundException();
+    if (!feed) throw new NotFoundException(errors.feed.notFound);
     return await this.commentRepository.deleteComemnt(feedId, commentId);
   }
 }

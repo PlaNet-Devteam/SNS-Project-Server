@@ -9,6 +9,7 @@ import {
 import { PaginateResponseVo } from 'src/core';
 import { CommentReplyFindOneVo } from './vo';
 import { CommentRepository } from '../comment/comment.repository';
+import * as errors from '../../locales/kr/errors.json';
 
 @Injectable()
 export class CommentReplyService {
@@ -32,7 +33,7 @@ export class CommentReplyService {
       commentId,
       commentListDto,
     );
-    if (!comments) throw new NotFoundException();
+    if (!comments) throw new NotFoundException(errors.comment.notFound);
     return comments;
   }
 
@@ -45,7 +46,7 @@ export class CommentReplyService {
     const comment = await this.commentReplyRepository.findOneCommentReply(
       comemntId,
     );
-    if (!comment) throw new NotFoundException();
+    if (!comment) throw new NotFoundException(errors.comment.notFound);
     return comment;
   }
 
@@ -64,7 +65,7 @@ export class CommentReplyService {
     comemntCreateDto: CommentReplyCreateDto,
   ): Promise<CommentReply> {
     const feed = await this.commentRepository.findOneComment(commentId);
-    if (!feed) throw new NotFoundException();
+    if (!feed) throw new NotFoundException(errors.feed.notFound);
 
     return await this.commentReplyRepository.createComemntReply(
       userId,
@@ -80,7 +81,7 @@ export class CommentReplyService {
     const comment = await this.commentReplyRepository.findOneCommentReply(
       commentId,
     );
-    if (!comment) throw new NotFoundException();
+    if (!comment) throw new NotFoundException(errors.comment.notFound);
 
     return await this.commentReplyRepository.updateComemntReply(
       commentId,
@@ -96,7 +97,7 @@ export class CommentReplyService {
    */
   async deleteComemntReply(commentId: number, replyId: number) {
     const feed = await this.commentRepository.findOneComment(commentId);
-    if (!feed) throw new NotFoundException();
+    if (!feed) throw new NotFoundException(errors.feed.notFound);
     return await this.commentReplyRepository.deleteComemntReply(
       commentId,
       replyId,
