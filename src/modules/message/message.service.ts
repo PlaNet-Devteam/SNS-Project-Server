@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { MessageRepository } from './message.repository';
 import { MessageListCreateDto } from './dto';
 import { RoomRepository } from '../room/room.repository';
+import * as errors from '../../locales/kr/errors.json';
 
 @Injectable()
 export class MessageService {
@@ -16,7 +17,7 @@ export class MessageService {
    */
   async findAll(roomUniqueId: string) {
     const room = await this.roomRepository.findOneByRoomUniqueId(roomUniqueId);
-    if (!room) throw new NotFoundException('존재하지 않는 채팅방입니다');
+    if (!room) throw new NotFoundException(errors.room.notFound);
     return await this.messageRepository.findAll(room.id);
   }
 

@@ -9,20 +9,18 @@ import {
   MinLength,
 } from 'class-validator';
 import { IsPassword } from 'src/common';
+import * as errors from '../../../locales/kr/errors.json';
 
 export class AuthLoginDto {
   // 이메일일 수 있고 아닐 수도 있음
   @ApiProperty()
   @IsNotEmpty({
-    message: '이메일은 필수 항목 입니다',
-  })
-  @MinLength(2, {
-    message: '이메일은 2자 이상 작성해주세요',
+    message: errors.auth.requiredEmail,
   })
   @IsEmail(
     {},
     {
-      message: '이메일 형식이여야 합니다',
+      message: errors.auth.invalidEmail,
     },
   )
   @Expose()
@@ -30,7 +28,7 @@ export class AuthLoginDto {
 
   @ApiProperty()
   @IsNotEmpty({
-    message: '비밀번호는 필수 항목 입니다',
+    message: errors.auth.requiredPassword,
   })
   @IsPassword({}, '비밀번호')
   @Expose()

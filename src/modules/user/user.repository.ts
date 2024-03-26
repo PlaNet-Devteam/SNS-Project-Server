@@ -22,6 +22,7 @@ import { UserDeleteDto } from './dto/user-delete.dto';
 import { UserBlock } from '../user-block/user-block.entity';
 import { PaginateResponseVo, generatePaginatedResponse } from 'src/core';
 import { UserFindOneVo } from './vo';
+import * as errors from '../../locales/kr/errors.json';
 
 @Injectable()
 export class UserRepository {
@@ -172,8 +173,7 @@ export class UserRepository {
         })
         .getOne();
 
-      if (blockedMe)
-        throw new NotFoundException('존재 하지 않는 사용자 입니다');
+      if (blockedMe) throw new NotFoundException(errors.user.notFound);
     }
 
     // * 팔로잉 유저
@@ -226,7 +226,7 @@ export class UserRepository {
     hashedPassword: string,
   ): Promise<boolean> {
     const check = await this.hashService.validate(password, hashedPassword);
-    if (!check) throw new BadRequestException('비밀번호가 올바르지 않습니다');
+    if (!check) throw new BadRequestException(errors.auth.invalidPassword);
     return check;
   }
 

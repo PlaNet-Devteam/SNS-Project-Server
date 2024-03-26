@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, ExtractJwt } from 'passport-jwt';
 import { UserRepository } from 'src/modules/user/user.repository';
 import { UserPayload } from '../type';
+import * as errors from '../../../locales/kr/errors.json';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -15,7 +16,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: UserPayload) {
     const user = await this.userRepository.findOneUser(payload._id);
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException(errors.user.notFound);
 
     return user;
   }

@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 import { Expose, Transform } from 'class-transformer';
 import { GENDER, IsEqualTo, IsPassword, USER_STATUS } from 'src/common';
+import * as errors from '../../../locales/kr/errors.json';
 
 export class UserCreateDto
   extends BaseDto<UserCreateDto>
@@ -17,12 +18,12 @@ export class UserCreateDto
 {
   @ApiProperty()
   @IsNotEmpty({
-    message: '이메일은 필수 항목 입니다',
+    message: errors.auth.requiredEmail,
   })
   @IsEmail(
     {},
     {
-      message: '이메일 형식이여야 합니다',
+      message: errors.auth.invalidEmail,
     },
   )
   @Expose()
@@ -30,10 +31,10 @@ export class UserCreateDto
 
   @ApiProperty()
   @IsNotEmpty({
-    message: '사용자명은 필수 항목 입니다 ',
+    message: errors.auth.requiredUsername,
   })
   @MinLength(6, {
-    message: '사용자명은 6자 이상 작성해주세요',
+    message: errors.auth.invalidUsername,
   })
   @Expose()
   username: string;
@@ -49,7 +50,7 @@ export class UserCreateDto
   @ApiPropertyOptional()
   @IsOptional()
   @MinLength(2, {
-    message: '닉네임은 2자이상 작성해주세요',
+    message: errors.auth.invalidNickname,
   })
   @Transform((value: any) =>
     value.value === '' ? (value.value = null) : value.value,
@@ -67,7 +68,7 @@ export class UserCreateDto
   @IsPassword({}, '비밀번호 확인')
   @IsOptional()
   @IsEqualTo('password', {
-    message: '비밀번호가 일치하지 않습니다',
+    message: errors.auth.invalidPassword,
   })
   @Expose()
   passwordConfirm?: string;

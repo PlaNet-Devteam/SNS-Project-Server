@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { FeedRepository } from './feed.repository';
 import { FeedFindOneVo } from './vo';
 import { UserRepository } from '../user/user.repository';
@@ -13,6 +17,7 @@ import { PaginateResponseVo } from 'src/core';
 import { User } from '../user/user.entity';
 import { UserBlockRepository } from '../user-block/user-block.repository';
 import { FeedLikeRepository } from '../feed-like/feed-like.repository';
+import * as errors from '../../locales/kr/errors.json';
 
 @Injectable()
 export class FeedService {
@@ -44,7 +49,7 @@ export class FeedService {
       excludeUserIds,
     );
 
-    if (!feeds) throw new NotFoundException();
+    if (!feeds) throw new NotFoundException(errors.feed.notFound);
 
     return feeds;
   }
@@ -54,7 +59,7 @@ export class FeedService {
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
     const feeds = await this.feedRepository.findAllByTag(feedListDto);
 
-    if (!feeds) throw new NotFoundException();
+    if (!feeds) throw new NotFoundException(errors.feed.notFound);
 
     return feeds;
   }
@@ -67,7 +72,7 @@ export class FeedService {
       user,
       feedListDto,
     );
-    if (!feeds) throw new NotFoundException();
+    if (!feeds) throw new NotFoundException(errors.feed.notFound);
     return feeds;
   }
 
@@ -76,7 +81,7 @@ export class FeedService {
     feedListDto?: FeedListDto,
   ): Promise<PaginateResponseVo<FeedFindOneVo>> {
     const user = await this.userRepository.findUserByUsername(username);
-    if (!user) throw new NotFoundException();
+    if (!user) throw new NotFoundException(errors.user.notFound);
 
     if (feedListDto.viewerId) {
       // * 차단 여부 체크 => 차단된 유저의 피드 빈배열 반환
@@ -98,7 +103,7 @@ export class FeedService {
       user,
       feedListDto,
     );
-    if (!feeds) throw new NotFoundException();
+    if (!feeds) throw new NotFoundException(errors.feed.notFound);
     return feeds;
   }
 
@@ -109,7 +114,7 @@ export class FeedService {
    */
   public async findOneFeed(id: number): Promise<FeedFindOneVo> {
     const feed = await this.feedRepository.findOneFeed(id);
-    if (!feed) throw new NotFoundException();
+    if (!feed) throw new NotFoundException(errors.feed.notFound);
     return feed;
   }
 
@@ -120,7 +125,7 @@ export class FeedService {
    */
   public async findOneByUser(user: User, id: number): Promise<FeedFindOneVo> {
     const feed = await this.feedRepository.findOneByUser(user, id);
-    if (!feed) throw new NotFoundException();
+    if (!feed) throw new NotFoundException(errors.feed.notFound);
     return feed;
   }
 
@@ -140,17 +145,17 @@ export class FeedService {
 
   public async likeFeed(userId: number, feedId: number) {
     const feed = await this.feedRepository.findOneFeed(feedId);
-    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    if (!feed) throw new NotFoundException(errors.feed.notFound);
 
     const like = await this.feedLikeRepository.findOne(userId, feedId);
-    if (like) throw new NotFoundException('잘못된 요청입니다 - 좋아요 실패');
+    if (like) throw new BadRequestException(errors.like.badRequest);
 
     return await this.feedRepository.likeFeed(userId, feedId);
   }
 
   public async bookmarkFeed(userId: number, feedId: number) {
     const feed = await this.feedRepository.findOneFeed(feedId);
-    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    if (!feed) throw new NotFoundException(errors.feed.notFound);
     return await this.feedRepository.bookmarkFeed(userId, feedId);
   }
 
@@ -166,7 +171,7 @@ export class FeedService {
     feedUpdateDto: FeedUpdateDto,
   ): Promise<FeedFindOneVo> {
     const feed = await this.feedRepository.findOneFeed(feedId);
-    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    if (!feed) throw new NotFoundException(errors.feed.notFound);
     return await this.feedRepository.updateFeed(feedId, feedUpdateDto);
   }
 
@@ -180,7 +185,7 @@ export class FeedService {
     feedUpdateStatusDto: FeedUpdateStatusDto,
   ): Promise<FeedFindOneVo> {
     const feed = await this.feedRepository.findOneFeed(feedId);
-    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    if (!feed) throw new NotFoundException(errors.feed.notFound);
     return await this.feedRepository.updateFeedStatus(
       feedId,
       feedUpdateStatusDto,
@@ -196,7 +201,7 @@ export class FeedService {
     feedUpdateStatusDto: FeedUpdateStatusDto,
   ): Promise<FeedFindOneVo> {
     const feed = await this.feedRepository.findOneFeed(feedId);
-    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    if (!feed) throw new NotFoundException(errors.feed.notFound);
     return await this.feedRepository.updateShowLikeCount(
       feedId,
       feedUpdateStatusDto,
@@ -211,7 +216,7 @@ export class FeedService {
    */
   public async deleteFeed(userId: number, feedId: number) {
     const feed = await this.feedRepository.findOneFeed(feedId);
-    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    if (!feed) throw new NotFoundException(errors.feed.notFound);
     return await this.feedRepository.deleteFeed(userId, feedId);
   }
 
@@ -221,24 +226,23 @@ export class FeedService {
    */
   public async deleteFeedImage(feedId: number, sortOrder: number) {
     const feed = await this.feedRepository.findOneFeed(feedId);
-    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    if (!feed) throw new NotFoundException(errors.feed.notFound);
     return await this.feedRepository.deleteFeedImage(feedId, sortOrder);
   }
 
   public async deleteLikeFeed(userId: number, feedId: number) {
     const feed = await this.feedRepository.findOneFeed(feedId);
-    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    if (!feed) throw new NotFoundException(errors.feed.notFound);
 
     const like = await this.feedLikeRepository.findOne(userId, feedId);
-    if (!like)
-      throw new NotFoundException('잘못된 요청입니다 - 좋아요 해제 실패');
+    if (!like) throw new NotFoundException(errors.like.badRequest);
 
     return await this.feedRepository.deleteLikeFeed(userId, feedId);
   }
 
   public async deleteBookmarkFeed(userId: number, feedId: number) {
     const feed = await this.feedRepository.findOneFeed(feedId);
-    if (!feed) throw new NotFoundException('존재하지 않는 게시물입니다');
+    if (!feed) throw new NotFoundException(errors.feed.notFound);
     return await this.feedRepository.deleteBookmarkFeed(userId, feedId);
   }
 }
