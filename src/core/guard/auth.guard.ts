@@ -9,6 +9,7 @@ import { Request } from 'express';
 import Redis from 'ioredis';
 import { RESPONSE_STATUS } from 'src/common';
 import * as cacheConvention from '../../modules/_context/cache.convention.json';
+import * as errors from '../../locales/kr/errors.json';
 
 const jwtService = new JwtService();
 
@@ -37,13 +38,13 @@ export class UserGuard extends AuthGuard('jwt') {
     if (!refreshCookie) {
       throw new UnauthorizedException({
         error: RESPONSE_STATUS.NO_REFRESH_TOKEN,
-        msg: 'No refresh token detected!',
+        msg: errors.auth.notFoundRefreshToken,
       });
     }
     if (!accessToken) {
       throw new UnauthorizedException({
         error: RESPONSE_STATUS.NO_ACCESS_TOKEN,
-        msg: 'No access token detected',
+        msg: errors.auth.notFoundToken,
       });
     } else {
       accessToken = request.headers['authorization'].split(' ')[1];
@@ -56,7 +57,7 @@ export class UserGuard extends AuthGuard('jwt') {
     } catch (error) {
       throw new UnauthorizedException({
         error: RESPONSE_STATUS.ACCESS_TOKEN_EXP,
-        msg: 'Access token expired.',
+        msg: errors.auth.expiredToken,
       });
     }
     // check refresh and access token user in redis
@@ -81,7 +82,7 @@ export class UserGuard extends AuthGuard('jwt') {
     if (!cache)
       throw new UnauthorizedException({
         error: RESPONSE_STATUS.NO_REFRESH_TOKEN,
-        msg: 'No refresh token detected!',
+        msg: errors.auth.notFoundRefreshToken,
       });
 
     return true;

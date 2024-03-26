@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import {
 import { UserDeleteDto } from './dto/user-delete.dto';
 import { PaginateResponseVo } from 'src/core';
 import { UserBlockRepository } from '../user-block/user-block.repository';
+import * as errors from '../../locales/kr/errors.json';
 
 @Injectable()
 export class UserService {
@@ -47,7 +49,7 @@ export class UserService {
    */
   public async findOne(id: number): Promise<UserFindOneVo> {
     const user = await this.userRepository.findOneUser(id);
-    if (!user) throw new NotFoundException();
+    if (!user) throw new NotFoundException(errors.user.notFound);
     return user;
   }
 
@@ -64,7 +66,7 @@ export class UserService {
       username,
       viewerId,
     );
-    if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
+    if (!user) throw new NotFoundException(errors.user.notFound);
     return user;
   }
 
@@ -78,12 +80,12 @@ export class UserService {
     const checkEmail = await this.userRepository.findUserByEmail(
       userCreateDto.email,
     );
-    if (checkEmail) throw new BadRequestException('이미 존재하는 이메일입니다');
+    if (checkEmail) throw new ConflictException(errors.user.alreadyEmail);
 
     const username = await this.userRepository.findUserByUsername(
       userCreateDto.username,
     );
-    if (username) throw new BadRequestException('이미 존재하는 유저명입니다');
+    if (username) throw new ConflictException(errors.user.alreadyUsername);
 
     await this.userRepository.createUser(userCreateDto);
   }
@@ -94,7 +96,7 @@ export class UserService {
    */
   public async updateUser(id: number, userUpdateDto: UserUpdateDto) {
     const user = await this.userRepository.findOneUser(id);
-    if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
+    if (!user) throw new NotFoundException(errors.user.notFound);
     await this.userRepository.updateUser(id, userUpdateDto);
   }
 
@@ -109,7 +111,7 @@ export class UserService {
     userUpdateStatusDto: UserUpdateStatusDto,
   ) {
     const user = await this.userRepository.findOneUser(id);
-    if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
+    if (!user) throw new NotFoundException(errors.user.notFound);
 
     return this.userRepository.updateUserStatus(id, userUpdateStatusDto);
   }
@@ -121,7 +123,7 @@ export class UserService {
    */
   public async activateUser(id: number) {
     const user = await this.userRepository.findOneUser(id);
-    if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
+    if (!user) throw new NotFoundException(errors.user.notFound);
 
     return this.userRepository.activateUser(id);
   }
@@ -134,7 +136,7 @@ export class UserService {
    */
   public async deleteUser(id: number, userDeleteDto: UserDeleteDto) {
     const user = await this.userRepository.findOneUser(id);
-    if (!user) throw new NotFoundException('존재 하지 않는 사용자 입니다');
+    if (!user) throw new NotFoundException(errors.user.notFound);
 
     return this.userRepository.deleteUser(id, userDeleteDto);
   }

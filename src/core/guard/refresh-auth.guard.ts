@@ -8,6 +8,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { RESPONSE_STATUS } from 'src/common';
 import { UserPayload } from 'src/modules/auth/type';
+import * as errors from '../../locales/kr/errors.json';
 
 const jwtService = new JwtService();
 
@@ -26,8 +27,8 @@ export class RefreshGuard extends AuthGuard('jwt') {
     const request = context.switchToHttp().getRequest<Request>();
     if (err) {
       throw new UnauthorizedException({
-        error: 'NO_USER_DETECTED',
-        msg: 'No user detected!',
+        error: RESPONSE_STATUS.NO_USER_DETECTED,
+        msg: errors.auth.userDetected,
       });
     }
     const accessToken = request.headers['authorization'].split(' ')[1];
@@ -35,7 +36,7 @@ export class RefreshGuard extends AuthGuard('jwt') {
     if (!refreshCookie) {
       throw new UnauthorizedException({
         error: RESPONSE_STATUS.NO_REFRESH_TOKEN,
-        msg: 'No refresh token detected!',
+        msg: errors.auth.notFoundRefreshToken,
       });
     }
     try {
@@ -45,7 +46,7 @@ export class RefreshGuard extends AuthGuard('jwt') {
     } catch (error) {
       throw new UnauthorizedException({
         error: RESPONSE_STATUS.ACCESS_TOKEN_EXP,
-        msg: 'Access token expired.',
+        msg: errors.auth.expiredToken,
       });
     }
     try {
@@ -53,8 +54,8 @@ export class RefreshGuard extends AuthGuard('jwt') {
       const decodeAccess = jwtService.decode(accessToken) as UserPayload;
       if (decodeAccess._id !== decodeRefresh._id)
         throw new UnauthorizedException({
-          error: 'NOT_YOUR REFRESH',
-          msg: 'Please login again',
+          error: RESPONSE_STATUS.NOT_YOUR_REFRESH,
+          msg: errors.auth.invalidRefreshToken,
         });
     } catch (error) {
       console.log(error);

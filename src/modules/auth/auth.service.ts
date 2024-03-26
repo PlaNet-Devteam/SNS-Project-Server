@@ -29,6 +29,7 @@ import { UserFindOneVo } from '../user/vo';
 import axios from 'axios';
 import { UserCreateDto } from '../user/dto';
 import { UserSocial } from '../user-social/user-social.entity';
+import * as errors from '../../locales/kr/errors.json';
 
 @Injectable()
 export class AuthService {
@@ -49,7 +50,7 @@ export class AuthService {
     deviceId: string,
   ): Promise<AuthTokenVo> {
     const user = await this.userRepository.findUserByEmail(authLoginDto.email);
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException(errors.user.notFound);
 
     // * 비번 체크
     await this.userRepository.comparePassword(
@@ -126,10 +127,10 @@ export class AuthService {
   async googleLogin(code: string, deviceId: string): Promise<AuthTokenVo> {
     const { access_token } = await this.requestGoogleToken(code);
     if (!access_token)
-      throw new BadRequestException('토큰 요청에 실패했습니다');
+      throw new BadRequestException(errors.auth.badRequestToken);
 
     const googleUser = await this.requestGoogleUserInfo(access_token);
-    if (!googleUser) throw new NotFoundException('존재하지 않는 유저입니다');
+    if (!googleUser) throw new NotFoundException(errors.user.notFound);
 
     await this.validateGoogleUser({
       username: `g_${googleUser.email.split('@')[0]}`,
@@ -140,7 +141,7 @@ export class AuthService {
     });
 
     const user = await this.userRepository.findUserByEmail(googleUser.email);
-    if (!user) throw new NotFoundException('존재하지 않는 유저입니다');
+    if (!user) throw new NotFoundException(errors.user.notFound);
 
     const accessToken = await this._sign_in_access_token(user);
     const refreshToken = await this._sign_in_refresh_token(user, true);
@@ -240,7 +241,7 @@ export class AuthService {
    */
   public async refreshUserToken(token: string): Promise<AuthTokenVo> {
     try {
-      if (!token) throw new UnauthorizedException();
+      if (!token) throw new UnauthorizedException(errors.auth.notFoundToken);
       const verifiedToken = this.jwtService.verify(token, {
         secret: process.env.REFRESH_JWT_SECRET_KEY,
       }) as UserPayload;
@@ -268,7 +269,7 @@ export class AuthService {
     } catch (error) {
       throw new UnauthorizedException({
         error: RESPONSE_STATUS.NO_REFRESH_TOKEN,
-        msg: 'Refresh token expired.',
+        msg: errors.auth.expiredRefreshToken,
       });
     }
   }
@@ -343,14 +344,14 @@ export class AuthService {
     changePasswordDto: ChangePasswordDto,
   ): Promise<UserFindOneVo> {
     const user = await this.userRepository.findUserByEmail(email);
-    if (!user) throw new NotFoundException();
+    if (!user) throw new NotFoundException(errors.user.notFound);
 
     const validPassword = await this.userRepository.comparePassword(
       changePasswordDto.password,
       user.password,
     );
     if (!validPassword)
-      throw new BadRequestException('비밀번호가 일치하지 않습니다');
+      throw new BadRequestException(errors.auth.invalidPassword);
 
     const newPassword = await this.hashService.hashString(
       changePasswordDto.newPassword,

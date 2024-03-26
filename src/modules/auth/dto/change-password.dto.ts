@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
 import { IsEqualTo, IsPassword } from 'src/common';
+import * as errors from '../../../locales/kr/errors.json';
 
 export class ChangePasswordDto {
   @ApiProperty()
@@ -19,7 +20,7 @@ export class ChangePasswordDto {
   @ApiProperty()
   @IsPassword({}, '새 비밀번호 확인')
   @IsEqualTo('newPassword', {
-    message: '비밀번호가 일치하지 않습니다',
+    message: errors.auth.invalidPassword,
   })
   @Expose()
   newPasswordConfirm: string;
