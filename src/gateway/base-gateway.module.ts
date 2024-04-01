@@ -7,9 +7,11 @@ import { messageProviders } from 'src/modules/message/message.provider';
 import { DatabaseModule } from 'src/config';
 import { RoomModule } from 'src/modules/room/room.module';
 import { roomProviders } from 'src/modules/room/room.provider';
+import { mapperUserRoomProviders } from 'src/modules/mapper-user-room/mapper-user-room.provider';
+import { MapperUserRoomModule } from 'src/modules';
 
 @Module({
-  imports: [DatabaseModule, MessageModule, RoomModule],
+  imports: [DatabaseModule, MessageModule, RoomModule, MapperUserRoomModule],
   providers: [
     DirectMessageGateway,
     {
@@ -18,6 +20,7 @@ import { roomProviders } from 'src/modules/room/room.provider';
     },
     ...messageProviders,
     ...roomProviders,
+    ...mapperUserRoomProviders,
   ],
 })
 export class BaseGatewayModule {}

@@ -7,10 +7,10 @@ export class MapperUserRoomService {
   constructor(private mapperUserRoomRepository: MapperUserRoomRepository) {}
 
   async findOneByUserId(userId: number) {
-    await this.mapperUserRoomRepository.findOneByUserId(userId);
+    return await this.mapperUserRoomRepository.findOneByUserId(userId);
   }
 
   async findRoomIdByUserIds(userIds: number[]) {
-    await this.mapperUserRoomRepository.findRoomIdByUserIds(userIds);
+    return await this.mapperUserRoomRepository.findRoomIdByUserIds(userIds);
   }
 }

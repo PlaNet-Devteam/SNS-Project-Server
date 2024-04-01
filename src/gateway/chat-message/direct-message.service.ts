@@ -7,12 +7,14 @@ import { MessageService } from 'src/modules/message/message.service';
 import { RoomService } from 'src/modules/room/room.service';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateMessageGatewayDto, JoinRoomGatewayDto } from './dto';
+import { MapperUserRoomService } from 'src/modules/mapper-user-room/mapper-user-room.service';
 
 @Injectable()
 export class DirectMessageService {
   constructor(
     private readonly messageService: MessageService,
     private readonly roomService: RoomService,
+    private readonly mapperUserRoomService: MapperUserRoomService,
   ) {}
 
   private chatRooms: Map<string, number[]> = new Map();
@@ -48,14 +50,20 @@ export class DirectMessageService {
     this.roomService.createRoom(roomUniqueId, userIds);
   }
 
-  createOrJoinChatRoom(userIds: number[]) {
-    const existingRoomId = this.findChatRoom(userIds);
-    if (existingRoomId !== undefined) {
-      return existingRoomId;
+  async createOrJoinChatRoom(userIds: number[]) {
+    const existingRoomId = await this.mapperUserRoomService.findRoomIdByUserIds(
+      userIds,
+    );
+
+    const room = await this.roomService.findOneById(existingRoomId);
+
+    if (!room) {
+      const newRoomUniqueId = uuidv4();
+      this.createRoom(newRoomUniqueId, userIds);
+      return newRoomUniqueId;
     }
-    const roomUniqueId = uuidv4();
-    this.createRoom(roomUniqueId, userIds);
-    return roomUniqueId;
+
+    return room.roomUniqueId;
   }
 
   findChatRoom(userIds: number[]) {

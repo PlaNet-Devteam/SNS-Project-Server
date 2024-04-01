@@ -39,20 +39,17 @@ export class MapperUserRoomRepository {
     });
   }
 
-  async findRoomIdByUserIds(userIds: number[]) {
-    const roomIdSet = new Set();
+  async findRoomIdByUserIds(userIds: number[]): Promise<number> {
+    const roomIds = this.mapperUserRoomRepository
+      .createQueryBuilder('mapperUserRoom')
+      .select('mapperUserRoom.roomId', 'roomId')
+      .where('mapperUserRoom.userId IN (:...userIds)', { userIds })
+      .groupBy('mapperUserRoom.roomId')
+      .having('COUNT(DISTINCT mapperUserRoom.userId) = :count', { count: 2 });
 
-    userIds.forEach(async (userId) => {
-      const userRoomId = await this.mapperUserRoomRepository.findOne({
-        where: {
-          userId,
-        },
-      });
-
-      roomIdSet.add(userRoomId);
-    });
-    console.log('roomIdSet', roomIdSet);
-    return roomIdSet;
+    const result = await roomIds.getRawMany<MapperUserRoom>();
+    const [roomId] = result.map((room) => room.roomId);
+    return roomId;
   }
 
   async createMapperUserRoom(mapperUserRoomCreateDto: MapperUserRoomCreateDto) {

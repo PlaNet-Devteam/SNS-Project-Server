@@ -34,6 +34,10 @@ export class RoomService {
     return filteredRooms;
   }
 
+  async findOneById(roomId: number) {
+    return await this.roomRepository.findOneById(roomId);
+  }
+
   async findOneByRoomUniqueId(roomUniqueId: string) {
     return await this.roomRepository.findOneByRoomUniqueId(roomUniqueId);
   }

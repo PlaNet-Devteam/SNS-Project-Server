@@ -48,20 +48,6 @@ export class RoomRepository {
     return room;
   }
 
-  async findOneByUsers(userIds: number[]) {
-    const room = await this.roomRepository
-      .createQueryBuilder('room')
-      .innerJoinAndSelect('room.users', 'users')
-      .leftJoinAndSelect('room.messages', 'messages')
-      .getOne();
-
-    for (const message of room.messages) {
-      message.user = await User.findOne({ where: { id: message.userId } });
-    }
-
-    return room;
-  }
-
   async createRoom(roomUniqueId: string, userIds: number[]) {
     const room = await dataSource.transaction(async (transaction) => {
       let newRoom = new Room();

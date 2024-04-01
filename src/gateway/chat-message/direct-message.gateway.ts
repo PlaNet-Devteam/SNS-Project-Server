@@ -23,13 +23,16 @@ export class DirectMessageGateway extends BaseGateway {
   }
 
   @SubscribeMessage('create_room')
-  createRoom(@MessageBody() createRoomGatewayDto: CreateRoomGatewayDto) {
-    const roomUniqueId = this.chatMessageService.createOrJoinChatRoom(
+  async createRoom(@MessageBody() createRoomGatewayDto: CreateRoomGatewayDto) {
+    const roomUniqueId = await this.chatMessageService.createOrJoinChatRoom(
       createRoomGatewayDto.userIds,
     );
-    this.server.sockets
-      .to(`user_${createRoomGatewayDto.userId}_create_room`)
-      .emit('create_room', roomUniqueId);
+
+    if (roomUniqueId) {
+      this.server.sockets
+        .to(`user_${createRoomGatewayDto.userId}_create_room`)
+        .emit('create_room', roomUniqueId);
+    }
   }
 
   @SubscribeMessage('join_create_room')
