@@ -34,6 +34,7 @@ export class UserGuard extends AuthGuard('jwt') {
     const request = context.switchToHttp().getRequest<Request>();
     let accessToken = request.headers['authorization'];
     const refreshCookie = request.cookies['refresh-token'];
+
     // REFRESH TOKEN 없을 경우
     if (!refreshCookie) {
       throw new UnauthorizedException({
@@ -41,6 +42,8 @@ export class UserGuard extends AuthGuard('jwt') {
         msg: errors.auth.notFoundRefreshToken,
       });
     }
+
+    // ACCESS TOKEN 없을 경우
     if (!accessToken) {
       throw new UnauthorizedException({
         error: RESPONSE_STATUS.NO_ACCESS_TOKEN,
@@ -50,6 +53,7 @@ export class UserGuard extends AuthGuard('jwt') {
       accessToken = request.headers['authorization'].split(' ')[1];
     }
 
+    // ACCESS TOKEN 만료 된 경우
     try {
       jwtService.verify(accessToken, {
         secret: process.env.JWT_SECRET_KEY,
@@ -62,6 +66,7 @@ export class UserGuard extends AuthGuard('jwt') {
     }
     // check refresh and access token user in redis
     // if (!this.loggingOut) this.checkRedis(user);
+
     return user;
   }
 
