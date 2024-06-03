@@ -241,7 +241,9 @@ export class AuthService {
    */
   public async refreshUserToken(token: string): Promise<AuthTokenVo> {
     try {
-      if (!token) throw new UnauthorizedException(errors.auth.notFoundToken);
+      if (!token)
+        throw new UnauthorizedException(errors.auth.notFoundRefreshToken);
+
       const verifiedToken = this.jwtService.verify(token, {
         secret: process.env.REFRESH_JWT_SECRET_KEY,
       }) as UserPayload;
@@ -259,16 +261,17 @@ export class AuthService {
 
       // 새로운 토큰들 발급받기
       const newAccessToken = await this._sign_in_access_token(user);
-      const newRefToken = await this._sign_in_refresh_token(user);
+      const newRefreshToken = await this._sign_in_refresh_token(user);
       const response = new AuthTokenVo({
         accessToken: newAccessToken,
-        refreshToken: newRefToken,
+        refreshToken: newRefreshToken,
       });
 
       return response;
     } catch (error) {
+      // 리프레시 토큰 만료
       throw new UnauthorizedException({
-        error: RESPONSE_STATUS.NO_REFRESH_TOKEN,
+        error: RESPONSE_STATUS.REFRESH_TOKEN_EXP,
         msg: errors.auth.expiredRefreshToken,
       });
     }
@@ -284,7 +287,7 @@ export class AuthService {
       secret: process.env.JWT_SECRET_KEY,
       expiresIn:
         process.env.NODE_ENV === ENVIRONMENT.DEVELOPMENT
-          ? '60000s'
+          ? '30m'
           : `${process.env.JWT_EXPIRES_IN}`,
     };
 
@@ -309,9 +312,12 @@ export class AuthService {
     user: User,
     rememberMe?: boolean,
   ): Promise<string> {
-    const expiresIn = rememberMe
-      ? process.env.REFRESH_JWT_EXPIRES_IN
-      : process.env.REFRESH_JWT_EXPIRES_IN_DEF;
+    const expiresIn =
+      process.env.NODE_ENV === ENVIRONMENT.DEVELOPMENT
+        ? '60m'
+        : rememberMe
+        ? process.env.REFRESH_JWT_EXPIRES_IN_DEF
+        : process.env.REFRESH_JWT_EXPIRES_IN;
 
     const accessTokenInfo: UserPayload = {
       _id: user.id,
